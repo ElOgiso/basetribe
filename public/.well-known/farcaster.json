@@ -4,36 +4,39 @@
     "payload": "eyJkb21haW4iOiJiYXNldHJpYmUudmVyY2VsLmFwcCJ9",
     "signature": "tLGi3i7plIuRySzbHsDv+MM8dtCr6zx973JBIrvm1xR9hNjXj2u6wvPpCDVNIN/Tn9RWbpe6wdRya0MeUm/MBxw="
   },
-  "frame": {
+
+  "baseBuilder": {
+    "ownerAddress": "0x2af2fe0b45119c69e3f236f078baf273292ebbfa" 
+  },
+
+  "miniapp": {
     "version": "1",
     "name": "BaseTribe",
-    "subtitle": "The Viral Engine of Base",
-    "description": "Post, engage, climb, earn, get rewards and repeat.",
-    "iconUrl": "https://basetribe.vercel.app/favicon.ico",
     "homeUrl": "https://basetribe.vercel.app",
-    "imageUrl": "https://basetribe.vercel.app/og-image.png",
-    "buttonTitle": "Join Base Tribe",
+    "iconUrl": "https://basetribe.vercel.app/icon.png",
+
     "splashImageUrl": "https://basetribe.vercel.app/splash.png",
     "splashBackgroundColor": "#ffffff",
-    "webhookUrl": "https://basetribe.vercel.app/api/webhook"
-  },
-  "primaryCategory": "social",
-  "tags": [
-    "base",
-    "tribe",
-    "community",
-    "social"
-  ],
-  "description": "Post, engage, climb, earn, get rewards and repeat.",
-  "tagline": "The Viral Engine of Base",
-  "heroImageUrl": "https://basetribe.vercel.app/og-image.png",
-  "screenshotUrls": [
-    "https://basetribe.vercel.app/screenshot1.png",
-    "https://basetribe.vercel.app/screenshot2.png",
-    "https://basetribe.vercel.app/screenshot3.png"
-  ],
-  "ogTitle": "BaseTribe",
-  "ogDescription": "Post, engage, climb, earn, get rewards and repeat.",
-  "ogImageUrl": "https://basetribe.vercel.app/og-image.png",
-  "noindex": false
+    "webhookUrl": "https://basetribe.vercel.app/api/webhook",
+
+    "subtitle": "The Viral Engine of Base",
+    "description": "Post, engage, climb, earn, get rewards and repeat.",
+
+    "screenshotUrls": [
+      "https://basetribe.vercel.app/screenshot1.png",
+      "https://basetribe.vercel.app/screenshot2.png",
+      "https://basetribe.vercel.app/screenshot3.png"
+    ],
+
+    "primaryCategory": "social",
+    "tags": ["base", "tribe", "community", "social"],
+
+    "heroImageUrl": "https://basetribe.vercel.app/og-image.png",
+    "tagline": "The Viral Engine of Base",
+
+    "ogTitle": "BaseTribe",
+    "ogDescription": "Post, engage, climb, earn, get rewards and repeat.",
+    "ogImageUrl": "https://basetribe.vercel.app/og-image.png",
+    "noindex": false
+  }
 }

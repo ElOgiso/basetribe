@@ -1,15 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BaseTribe</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Community Claiming System App</title>
-    </head>
+    <!-- ✅ REQUIRED: Base Miniapp Metadata -->
+    <meta
+      name="fc:miniapp"
+      content='{
+        "version": "next",
+        "imageUrl": "https://basetribe.xyz/og-image.png",
+        "button": {
+          "title": "Join BaseTribe",
+          "action": {
+            "type": "launch_frame",
+            "name": "BaseTribe",
+            "url": "https://basetribe.xyz",
+            "splashImageUrl": "https://basetribe.xyz/splash.png",
+            "splashBackgroundColor": "#0b1220"
+          }
+        }
+      }'
+    />
 
-    <body>
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-    </body>
-  </html>
-  
+    <!-- ✅ Social Share Metadata (Open Graph) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BaseTribe" />
+    <meta property="og:description" content="The Viral Engine of Base. Post, engage, climb, earn, get rewards and repeat." />
+    <meta property="og:image" content="https://basetribe.xyz/og-image.png" />
+    <meta property="og:url" content="https://basetribe.xyz" />
+
+    <!-- ✅ Twitter Metadata -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BaseTribe" />
+    <meta name="twitter:description" content="The Viral Engine of Base" />
+    <meta name="twitter:image" content="https://basetribe.xyz/og-image.png" />
+
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
