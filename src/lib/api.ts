@@ -469,27 +469,26 @@ export async function updateMembershipNFT(
     console.log('   NFT Type:', nftType);
     console.log('   TX Hash:', txHash);
     
-    const response = await fetch(
-      CONFIG.ENGAGEMENT_BOT_URL,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'updateMembershipNFT',
-          fid,
-          walletAddress,
-          txHash,
-          nftType,
-          timestamp,
-          status: 'claimed',
-        }),
-      }
-    );
+    // Use serverless API endpoint to avoid CORS issues
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'updateMembershipNFT',
+        fid,
+        walletAddress,
+        txHash,
+        nftType,
+        timestamp,
+        status: 'claimed',
+      }),
+    });
 
     if (!response.ok) {
-      console.error('❌ Failed to update membership NFT status:', response.status, response.statusText);
+      const errorData = await response.json();
+      console.error('❌ Failed to update membership NFT status:', errorData);
       return false;
     }
 
@@ -522,24 +521,24 @@ export async function updateBTribeBalance(
       timestamp,
     };
     
-    console.log('📤 Sending $BTRIBE balance update to backend:', payload);
-    console.log('📍 Backend URL:', CONFIG.ENGAGEMENT_BOT_URL);
+    console.log('📤 Sending $BTRIBE balance update to serverless API:', payload);
     
-    const response = await fetch(
-      CONFIG.ENGAGEMENT_BOT_URL,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        mode: 'no-cors', // Add this to handle CORS issues
-      }
-    );
+    // Use serverless API endpoint to avoid CORS issues
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-    // Note: With mode: 'no-cors', we can't read the response
-    // But the request will still be sent to the backend
-    console.log('✅ $BTRIBE balance update request sent to Google Sheets');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update Google Sheets');
+    }
+
+    const result = await response.json();
+    console.log('✅ $BTRIBE balance updated in Google Sheets:', result);
     console.log('📊 Updated: FID', fid, '| New Balance:', newBalance, '| Claimed:', claimedAmount);
     return true;
   } catch (error) {
@@ -567,24 +566,24 @@ export async function updateJesseBalance(
       timestamp,
     };
     
-    console.log('📤 Sending $JESSE balance update to backend:', payload);
-    console.log('📍 Backend URL:', CONFIG.ENGAGEMENT_BOT_URL);
+    console.log('📤 Sending $JESSE balance update to serverless API:', payload);
     
-    const response = await fetch(
-      CONFIG.ENGAGEMENT_BOT_URL,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        mode: 'no-cors', // Add this to handle CORS issues
-      }
-    );
+    // Use serverless API endpoint to avoid CORS issues
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-    // Note: With mode: 'no-cors', we can't read the response
-    // But the request will still be sent to the backend
-    console.log('✅ $JESSE balance update request sent to Google Sheets');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update Google Sheets');
+    }
+
+    const result = await response.json();
+    console.log('✅ $JESSE balance updated in Google Sheets:', result);
     console.log('📊 Updated: FID', fid, '| New Balance:', newBalance, '| Claimed:', claimedAmount);
     return true;
   } catch (error) {
@@ -612,24 +611,24 @@ export async function updateUSDCBalance(
       timestamp,
     };
     
-    console.log('📤 Sending USDC balance update to backend:', payload);
-    console.log('📍 Backend URL:', CONFIG.ENGAGEMENT_BOT_URL);
+    console.log('📤 Sending USDC balance update to serverless API:', payload);
     
-    const response = await fetch(
-      CONFIG.ENGAGEMENT_BOT_URL,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        mode: 'no-cors', // Add this to handle CORS issues
-      }
-    );
+    // Use serverless API endpoint to avoid CORS issues
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-    // Note: With mode: 'no-cors', we can't read the response
-    // But the request will still be sent to the backend
-    console.log('✅ USDC balance update request sent to Google Sheets');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update Google Sheets');
+    }
+
+    const result = await response.json();
+    console.log('✅ USDC balance updated in Google Sheets:', result);
     console.log('📊 Updated: FID', fid, '| New Balance:', newBalance, '| Claimed:', claimedAmount);
     return true;
   } catch (error) {

@@ -90,7 +90,7 @@ export default function App() {
   const [userFid, setUserFid] = useState<string | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
 
-  // Check for existing connection on mount
+    // Check for existing connection on mount
   useEffect(() => {
     checkConnection();
     
@@ -282,6 +282,12 @@ export default function App() {
       
       console.log('✅ User loaded successfully - Member:', membershipStatus);
       
+      // Show welcome banner on first visit (check localStorage)
+      const hasSeenBanner = localStorage.getItem('basetribe_seen_welcome_banner');
+      if (!hasSeenBanner && membershipStatus) {
+        setTimeout(() => setShowWelcomeBanner(true), 1000); // Show after 1 second
+      }
+      
     } catch (error) {
       console.warn('⚠️ User data temporarily unavailable');
       
@@ -378,13 +384,18 @@ export default function App() {
         const newBalance = result.newBalance !== undefined ? result.newBalance : 0;
         setUserData(prev => prev ? { ...prev, btribe_balance: newBalance } : null);
         
-        // ✅ Update Google Sheets with new balance
+        // ✅ Update Google Sheets with new balance (CRITICAL - must succeed)
         if (fid && result.txHash) {
           try {
             await updateBTribeBalance(fid, newBalance, userData.btribe_balance, result.txHash);
             console.log('✅ $BTRIBE balance updated in Google Sheets');
           } catch (updateError) {
-            console.error('⚠️ Failed to update Google Sheets (claim still succeeded):', updateError);
+            console.error('❌ Failed to update Google Sheets:', updateError);
+            // Show error to user - this is critical
+            setNotification({
+              type: 'error',
+              message: 'Tokens claimed but failed to update balance record. Please contact support.',
+            });
           }
         }
       } else {
@@ -437,13 +448,18 @@ export default function App() {
           setUserData(prev => prev ? { ...prev, jesse_balance: result.newBalance! } : null);
         }
         
-        // ✅ Update Google Sheets with new balance
+        // ✅ Update Google Sheets with new balance (CRITICAL - must succeed)
         if (userData.farcaster_fid && result.txHash) {
           try {
             await updateJesseBalance(userData.farcaster_fid, result.newBalance!, userData.jesse_balance, result.txHash);
             console.log('✅ $JESSE balance updated in Google Sheets');
           } catch (updateError) {
-            console.error('⚠️ Failed to update Google Sheets (claim still succeeded):', updateError);
+            console.error('❌ Failed to update Google Sheets:', updateError);
+            // Show error to user - this is critical
+            setNotification({
+              type: 'error',
+              message: 'Tokens claimed but failed to update balance record. Please contact support.',
+            });
           }
         }
       } else {
@@ -496,13 +512,18 @@ export default function App() {
           setUserData(prev => prev ? { ...prev, usdc_claims: result.newBalance! } : null);
         }
         
-        // ✅ Update Google Sheets with new balance
+        // ✅ Update Google Sheets with new balance (CRITICAL - must succeed)
         if (userData.farcaster_fid && result.txHash) {
           try {
             await updateUSDCBalance(userData.farcaster_fid, result.newBalance!, userData.usdc_claims, result.txHash);
             console.log('✅ USDC balance updated in Google Sheets');
           } catch (updateError) {
-            console.error('⚠️ Failed to update Google Sheets (claim still succeeded):', updateError);
+            console.error('❌ Failed to update Google Sheets:', updateError);
+            // Show error to user - this is critical
+            setNotification({
+              type: 'error',
+              message: 'Tokens claimed but failed to update balance record. Please contact support.',
+            });
           }
         }
       } else {
