@@ -1,6 +1,7 @@
 // BaseTribe - Community Engagement App
 'use client';
 
+import './styles/globals.css';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
@@ -20,7 +21,8 @@ import {
   ExternalLink,
   Rocket,
   AlertCircle,
-  Swords
+  Swords,
+  Share2
 } from 'lucide-react';
 import { CONFIG, NFT_TOKENS, LINKS } from './lib/constants';
 import { 
@@ -36,10 +38,10 @@ import { connectWallet, getAccounts } from './lib/wallet';
 import { copyToClipboard } from './lib/clipboard';
 import { fetchFidFromWallet, getClaimableBalance, claimTokens, claimJesseTokens, claimUSDC } from './lib/claiming';
 import type { UserData, LeaderboardEntry } from './lib/types';
-import baseTribeLogo from './assets/logo.png';
-import qrCodeImage from './assets/qrcode.png';
-import donationBackground from './assets/qrbackground.png';
-import tribeBanner from './assets/meetthetribe.png';
+import baseTribeLogo from 'figma:asset/544e4e31614cc37ee4c9bee294a3a4caa97fa062.png';
+import qrCodeImage from 'figma:asset/85fcf9bf9f7bde187263912c5771705ebf9c02f6.png';
+import donationBackground from 'figma:asset/12e573eb03a02b9aee1c6e4305222ae6ec6d1354.png';
+import tribeBanner from 'figma:asset/6fb1ba564aa36eea5b5df9921f96cc2c234bf993.png';
 
 // Components
 import { TokenScroller } from './components/TokenScroller';
@@ -61,6 +63,7 @@ import { ProjectsSection } from './components/ProjectsSection';
 import { LiveRaidBlock } from './components/LiveRaidBlock';
 import { SessionNotificationBanner } from './components/SessionNotificationBanner';
 import { SessionProgressBlock } from './components/SessionProgressBlock';
+import { WelcomeBanner } from './components/WelcomeBanner';
 import { RainingSeasonOverlay } from './components/RainingSeasonOverlay';
 
 export default function App() {
@@ -89,8 +92,37 @@ export default function App() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [userFid, setUserFid] = useState<string | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
 
-    // Check for existing connection on mount
+  // ✅ SDK READY SIGNAL - Dynamically load Farcaster Frame SDK
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Dynamically import SDK to avoid build-time issues
+        const { default: sdk } = await import('@farcaster/frame-sdk');
+        await sdk.actions.ready();
+        console.log('✅ Farcaster Frame SDK ready');
+      } catch (err) {
+        // SDK not available or failed to load - this is OK for non-frame environments
+        console.warn("Farcaster Frame SDK not available (this is OK for web):", err);
+      }
+    };
+    load();
+  }, []);
+
+  // Clear any stuck intervals on mount (fixes restored version issues)
+  useEffect(() => {
+    // Get the highest interval ID
+    const intervalId = setInterval(() => {}, 9999999);
+    // Clear all intervals up to that ID
+    for (let i = 1; i < intervalId; i++) {
+      clearInterval(i);
+    }
+    clearInterval(intervalId);
+    console.log('🧹 Cleared any stuck intervals from previous version');
+  }, []);
+
+  // Check for existing connection on mount
   useEffect(() => {
     checkConnection();
     
@@ -568,8 +600,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#001F3F] via-[#002855] to-[#001F3F] overflow-x-hidden">
-      {/* Mobile Frame Container - Max 430px for real phone view */}
-      <div className="max-w-[430px] mx-auto relative">
+      {/* Welcome Banner - Shows on first visit */}
+      <WelcomeBanner
+        userData={userData}
+        isVisible={showWelcomeBanner}
+        onClose={() => {
+          setShowWelcomeBanner(false);
+          localStorage.setItem('basetribe_seen_welcome_banner', 'true');
+        }}
+      />
+
+      {/* Responsive Container - Mobile first (430px) but expands on larger screens */}
+      <div className="max-w-[430px] md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto relative">
         {/* Token Scroller */}
         <TokenScroller />
 
@@ -873,6 +915,15 @@ export default function App() {
                         <p className="text-white text-sm capitalize">{userData.status}</p>
                       </div>
                     </div>
+                    
+                    {/* Share Banner Button */}
+                    <Button
+                      onClick={() => setShowWelcomeBanner(true)}
+                      className="w-full mt-4 bg-gradient-to-r from-[#39FF14] to-green-500 hover:from-[#39FF14]/90 hover:to-green-500/90 text-black font-bold py-3 rounded-xl shadow-lg hover:shadow-[#39FF14]/50 transition-all"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share Your Stats Banner
+                    </Button>
                   </Card>
 
                   <Card className="bg-[#001F3F]/50 p-6 rounded-xl border border-white/10">
@@ -1067,11 +1118,13 @@ export default function App() {
           {/* Footer Credits */}
           <div className="pb-8 text-center">
             <p className="text-white/40 text-sm">
-              Built on Base by Base Tribe 🔵
+              Built on Base by Base Tribe.
             </p>
           </div>
         </div>
       </div>
+      
+
     </div>
   );
 }
