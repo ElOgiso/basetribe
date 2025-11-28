@@ -9,7 +9,7 @@ import { mintNFT, waitForTransaction, MINT_PRICES, MINT_PRICE_BREAKDOWN, openMan
 import { updateMembershipNFT } from '../lib/api';
 import { fetchFidFromWallet } from '../lib/claiming';
 import type { NFTMetadata } from '../lib/nft';
-import bannerImage from 'figma:asset/8bf6d31ee03a48033a2eba6f6837efca01b3fd26.png';
+import bannerImage from '../assets/nftmint.png';
 
 interface ManifoldNFTClaimProps {
   isConnected: boolean;

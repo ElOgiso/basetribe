@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ExternalLink, CheckCircle, Info, Twitter, Send, Hash, MessageCircle, Repeat2, ThumbsUp } from 'lucide-react';
 import { LINKS } from '@/lib/constants';
-import tribeLogo from 'figma:asset/544e4e31614cc37ee4c9bee294a3a4caa97fa062.png';
+import tribeLogo from '../assets/logo.png';
 
 interface JoinFlowProps {
   open: boolean;
