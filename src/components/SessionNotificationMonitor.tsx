@@ -12,6 +12,10 @@ export function SessionNotificationMonitor() {
   const notificationSentRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    // ⚠️ DISABLED: Causes CORS errors with ENGAGEMENT_BOT_URL
+    // This component is not used in production - kept for reference only
+    return; // Early return - do nothing
+    
     const checkAndNotify = async () => {
       const now = new Date();
       const waTime = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Lagos' }));

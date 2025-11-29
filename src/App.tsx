@@ -1,6 +1,7 @@
 // BaseTribe - Community Engagement App
 'use client';
 
+import './styles/globals.css';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
@@ -20,7 +21,9 @@ import {
   ExternalLink,
   Rocket,
   AlertCircle,
-  Swords
+  Swords,
+  Share2,
+  Activity
 } from 'lucide-react';
 import { CONFIG, NFT_TOKENS, LINKS } from './lib/constants';
 import { 
@@ -61,7 +64,9 @@ import { ProjectsSection } from './components/ProjectsSection';
 import { LiveRaidBlock } from './components/LiveRaidBlock';
 import { SessionNotificationBanner } from './components/SessionNotificationBanner';
 import { SessionProgressBlock } from './components/SessionProgressBlock';
+import { WelcomeBanner } from './components/WelcomeBanner';
 import { RainingSeasonOverlay } from './components/RainingSeasonOverlay';
+import { ActivityFeed } from './components/ActivityFeed';
 
 export default function App() {
   // ✅ SDK READY SIGNAL
@@ -89,6 +94,35 @@ export default function App() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [userFid, setUserFid] = useState<string | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+
+  // ✅ SDK READY SIGNAL - Dynamically load Farcaster Frame SDK
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Dynamically import SDK to avoid build-time issues
+        const { default: sdk } = await import('@farcaster/miniapp-sdk');
+        await sdk.actions.ready();
+        console.log('✅ Farcaster MiniApp SDK ready');
+      } catch (err) {
+        // SDK not available or failed to load - this is OK for non-frame environments
+        console.warn("Farcaster Frame SDK not available (this is OK for web):", err);
+      }
+    };
+    load();
+  }, []);
+
+  // Clear any stuck intervals on mount (fixes restored version issues)
+  useEffect(() => {
+    // Get the highest interval ID
+    const intervalId = setInterval(() => {}, 9999999);
+    // Clear all intervals up to that ID
+    for (let i = 1; i < intervalId; i++) {
+      clearInterval(i);
+    }
+    clearInterval(intervalId);
+    console.log('🧹 Cleared any stuck intervals from previous version');
+  }, []);
 
   // Check for existing connection on mount
   useEffect(() => {
@@ -282,6 +316,12 @@ export default function App() {
       
       console.log('✅ User loaded successfully - Member:', membershipStatus);
       
+      // Show welcome banner on first visit (check localStorage)
+      const hasSeenBanner = localStorage.getItem('basetribe_seen_welcome_banner');
+      if (!hasSeenBanner && membershipStatus) {
+        setTimeout(() => setShowWelcomeBanner(true), 1000); // Show after 1 second
+      }
+      
     } catch (error) {
       console.warn('⚠️ User data temporarily unavailable');
       
@@ -354,7 +394,7 @@ export default function App() {
     }
   };
 
- const handleClaim = async () => {
+  const handleClaim = async () => {
     if (!isConnected || !address || !userData || userData.btribe_balance === 0) {
       return;
     }
@@ -562,8 +602,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#001F3F] via-[#002855] to-[#001F3F] overflow-x-hidden">
-      {/* Mobile Frame Container - Max 430px for real phone view */}
-      <div className="max-w-[430px] mx-auto relative">
+      {/* Welcome Banner - Shows on first visit */}
+      <WelcomeBanner
+        userData={userData}
+        isVisible={showWelcomeBanner}
+        onClose={() => {
+          setShowWelcomeBanner(false);
+          localStorage.setItem('basetribe_seen_welcome_banner', 'true');
+        }}
+      />
+
+      {/* Responsive Container - Mobile first (430px) but expands on larger screens */}
+      <div className="max-w-[430px] md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto relative">
         {/* Token Scroller */}
         <TokenScroller />
 
@@ -575,8 +625,8 @@ export default function App() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={baseTribeLogo} 
-                    alt="BaseTribe Logo" 
+                    src={tribeLogo} 
+                    alt="BaseTribe" 
                     className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="min-w-0 flex-1">
@@ -635,13 +685,20 @@ export default function App() {
         <div className="px-4 py-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Tab List */}
-            <TabsList className="grid w-full grid-cols-4 bg-[#001F3F]/50 p-1 rounded-xl mb-6">
+            <TabsList className="grid w-full grid-cols-5 bg-[#001F3F]/50 p-1 rounded-xl mb-6">
               <TabsTrigger
                 value="home"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#7B2CBF] data-[state=active]:to-[#00D4FF] data-[state=active]:text-white rounded-lg"
               >
                 <Home className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Home</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="activity"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#7B2CBF] data-[state=active]:to-[#00D4FF] data-[state=active]:text-white rounded-lg"
+              >
+                <Activity className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Feed</span>
               </TabsTrigger>
               <TabsTrigger
                 value="leaderboard"
@@ -748,6 +805,24 @@ export default function App() {
                 walletAddress={address} 
                 userFid={userFid}
               />
+            </TabsContent>
+
+            {/* Activity Feed Tab */}
+            <TabsContent value="activity">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Activity Feed</h2>
+                    <p className="text-sm text-gray-400">Latest community engagements</p>
+                  </div>
+                </div>
+                <ActivityFeed 
+                  userFid={userFid} 
+                  limit={50} 
+                  userData={userData}
+                  onRefresh={() => address && loadUserData(address)}
+                />
+              </div>
             </TabsContent>
 
             {/* Leaderboard Tab */}
@@ -867,6 +942,15 @@ export default function App() {
                         <p className="text-white text-sm capitalize">{userData.status}</p>
                       </div>
                     </div>
+                    
+                    {/* Share Banner Button */}
+                    <Button
+                      onClick={() => setShowWelcomeBanner(true)}
+                      className="w-full mt-4 bg-gradient-to-r from-[#39FF14] to-green-500 hover:from-[#39FF14]/90 hover:to-green-500/90 text-black font-bold py-3 rounded-xl shadow-lg hover:shadow-[#39FF14]/50 transition-all"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share Your Stats Banner
+                    </Button>
                   </Card>
 
                   <Card className="bg-[#001F3F]/50 p-6 rounded-xl border border-white/10">
@@ -1066,6 +1150,8 @@ export default function App() {
           </div>
         </div>
       </div>
+      
+
     </div>
   );
 }

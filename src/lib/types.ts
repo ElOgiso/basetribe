@@ -102,18 +102,21 @@ export interface LeaderboardEntry {
 
 /**
  * Engagement Data from Engagements sheet
+ * Matches the column structure: session_date | timestamp | session_time | session_index | 
+ * telegram_id | telegram_username | farcaster_username | cast_hash | link | status | checked_at
  */
 export interface EngagementData {
-  session_date: string;
-  timestamp: Date;
-  session_time: string;
-  session_index: string;
-  telegram_id: string;
-  telegram_username: string;
-  farcaster_username: string;
-  cast_hash: string;
-  link: string;
-  status: string;
+  session_date: string;      // Column A
+  timestamp: string;          // Column B
+  session_time: string;       // Column C
+  session_index: string;      // Column D
+  telegram_id: string;        // Column E
+  telegram_username: string;  // Column F
+  farcaster_username: string; // Column G
+  cast_hash: string;          // Column H
+  link: string;               // Column I
+  status: string;             // Column J
+  checked_at: string;         // Column K
 }
 
 /**

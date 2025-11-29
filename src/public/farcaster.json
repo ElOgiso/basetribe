@@ -1,39 +1,18 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjUyMDE1NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweEMzZTU2NGY2N0EyYjZCRDYzNjFjNTU3MThjNjI2OEY5RWEzNzk2OUUifQ",
-    "payload": "eyJkb21haW4iOiJiYXNldHJpYmUueHl6In0",
-    "signature": "c+6e5l7rNC9CoOSjsyeMWiHqG/e7jU9M6ML9iCXhLzcA4bpRPrJksk3dvyE4UGLdknxYtfgQKbu1Pg+oKMhAyBs="
-  },
-  "baseBuilder": {
-    "ownerAddress": "0x2af2fe0b45119c69e3f236f078baf273292ebbfa"
+    "header": "eyJmaWQiOjExNjgxMDksInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9",
+    "payload": "eyJkb21haW4iOiJ5b3VyLWRvbWFpbi5jb20ifQ",
+    "signature": "MHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA"
   },
   "miniapp": {
-    "version": "1",
-    "name": "BaseTribe",
-    "homeUrl": "https://basetribe.xyz",
-    "iconUrl": "https://basetribe.xyz/icon.png",
-    "splashImageUrl": "https://basetribe.xyz/splash.png",
-    "splashBackgroundColor": "#ffffff",
-    "webhookUrl": "https://basetribe.xyz/api/webhook",
-    "subtitle": "The Viral Engine of Base",
-    "description": "Post, engage, climb, earn, get rewards and repeat.",
-    "screenshotUrls": [
-      "https://basetribe.xyz/screenshot1.png",
-      "https://basetribe.xyz/screenshot2.png",
-      "https://basetribe.xyz/screenshot3.png"
-    ],
-    "primaryCategory": "social",
-    "tags": [
-      "base",
-      "tribe",
-      "community",
-      "social"
-    ],
-    "heroImageUrl": "https://basetribe.xyz/og-image.png",
-    "tagline": "The Viral Engine of Base",
-    "ogTitle": "BaseTribe",
-    "ogDescription": "Post, engage, climb, earn, get rewards and repeat.",
-    "ogImageUrl": "https://basetribe.xyz/og-image.png",
-    "noindex": false
+    "version": "1.0.0",
+    "name": "BaseTribe Engagement",
+    "iconUrl": "https://your-domain.com/icon.png",
+    "homeUrl": "https://your-domain.com",
+    "imageUrl": "https://your-domain.com/preview.png",
+    "buttonTitle": "Open BaseTribe",
+    "splashImageUrl": "https://your-domain.com/splash.png",
+    "splashBackgroundColor": "#001F3F",
+    "webhookUrl": "https://api.neynar.com/f/app/c0ba9872-e675-4a3f-944d-8b1331d0a471/event"
   }
 }

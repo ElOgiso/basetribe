@@ -235,7 +235,7 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
           </p>
         </Card>
       ) : isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto">
           {[1, 2].map((i) => (
             <Card key={i} className="bg-[#001F3F]/50 p-3 sm:p-6 rounded-xl border border-white/10">
               <div className="animate-pulse space-y-2 sm:space-y-4">
@@ -248,7 +248,7 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto">
           {/* Base Tribe Founder NFT - PREMIUM DESIGN */}
           <div className="relative overflow-hidden group">
             {/* Multi-layer purple glow effects */}
@@ -261,7 +261,7 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
             </div>
             
             {/* Glass morphism card */}
-            <Card className="relative bg-gradient-to-br from-[#1a0a2e]/95 via-[#0f0520]/90 to-[#000000]/95 backdrop-blur-xl p-3 sm:p-6 rounded-2xl border border-[#7B2CBF]/40 shadow-[0_8px_32px_0_rgba(123,44,191,0.25)]">
+            <Card className="relative bg-gradient-to-br from-[#1a0a2e]/95 via-[#0f0520]/90 to-[#000000]/95 backdrop-blur-xl p-3 sm:p-5 md:p-6 lg:p-7 rounded-xl sm:rounded-2xl border border-[#7B2CBF]/40 shadow-[0_8px_32px_0_rgba(123,44,191,0.25)]">
               {/* Floating particles effect */}
               <div className="absolute top-2 left-4 w-1 h-1 bg-[#7B2CBF] rounded-full animate-ping pointer-events-none" style={{ animationDuration: '2s' }}></div>
               <div className="absolute top-4 right-8 w-1 h-1 bg-[#9D4EDD] rounded-full animate-ping pointer-events-none" style={{ animationDelay: '1s', animationDuration: '3s' }}></div>
@@ -270,10 +270,10 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
               {/* Top accent line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#7B2CBF] to-transparent pointer-events-none"></div>
               
-              <div className="relative z-10 space-y-2 sm:space-y-4">
+              <div className="relative z-10 space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-5">
                 {/* NFT Image */}
                 <div className="relative">
-                  <div className="w-full aspect-square rounded-xl overflow-hidden border-2 border-[#7B2CBF]/50 shadow-2xl shadow-[#7B2CBF]/40">
+                  <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden border border-[#7B2CBF]/50 sm:border-2 shadow-xl sm:shadow-2xl shadow-[#7B2CBF]/40">
                     {founderMetadata?.image ? (
                       <img 
                         src={founderMetadata.image} 
@@ -282,64 +282,66 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#7B2CBF] to-[#5A1F9A] flex items-center justify-center">
-                        <Shield className="w-12 h-12 sm:w-24 sm:h-24 text-white/40" />
+                        <Shield className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 text-white/40" />
                       </div>
                     )}
                   </div>
-                  <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gradient-to-r from-[#7B2CBF] to-[#9D4EDD] text-white border-0 shadow-lg text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1">
+                  <Badge className="absolute top-1 right-1 sm:top-2 sm:right-2 md:top-3 md:right-3 bg-gradient-to-r from-[#7B2CBF] to-[#9D4EDD] text-white border-0 shadow-lg text-[10px] sm:text-xs md:text-sm px-1.5 py-0.5 sm:px-2 sm:py-1">
                     Token #1
                   </Badge>
                 </div>
 
                 {/* NFT Info */}
-                <div className="space-y-1 sm:space-y-2">
-                  <h3 className="text-sm sm:text-xl font-bold text-white flex items-center gap-1 sm:gap-2">
-                    <span className="truncate">{founderMetadata?.name || 'Base Tribe Founder'}</span>
-                    <Sparkles className="w-3 h-3 sm:w-5 sm:h-5 text-[#7B2CBF] flex-shrink-0 drop-shadow-[0_0_10px_rgba(123,44,191,0.8)]" />
-                  </h3>
-                  <p 
-                    className="text-white/70 text-[10px] sm:text-sm line-clamp-2 cursor-pointer hover:text-white/90 transition-colors"
-                    onClick={() => {
-                      setSelectedNFT({
-                        name: founderMetadata?.name || 'Base Tribe Founder',
-                        description: founderMetadata?.description || 'Founding member of Base Tribe'
-                      });
-                      setShowDescriptionModal(true);
-                    }}
-                  >
-                    {founderMetadata?.description || 'Founding member of Base Tribe'}
-                  </p>
+                <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                  <div className="space-y-0.5 sm:space-y-1 md:space-y-1.5">
+                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-white flex items-center gap-1 sm:gap-2">
+                      <span className="truncate">{founderMetadata?.name || 'Base Tribe Founder'}</span>
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#7B2CBF] flex-shrink-0 drop-shadow-[0_0_10px_rgba(123,44,191,0.8)]" />
+                    </h3>
+                    <p 
+                      className="text-white/70 text-[10px] sm:text-xs md:text-sm leading-snug sm:leading-relaxed line-clamp-2 cursor-pointer hover:text-white/90 transition-colors"
+                      onClick={() => {
+                        setSelectedNFT({
+                          name: founderMetadata?.name || 'Base Tribe Founder',
+                          description: founderMetadata?.description || 'Founding member of Base Tribe'
+                        });
+                        setShowDescriptionModal(true);
+                      }}
+                    >
+                      {founderMetadata?.description || 'Founding member of Base Tribe'}
+                    </p>
+                  </div>
                   
                   {/* Price Breakdown - Enhanced */}
                   <div className="relative overflow-hidden group/price">
-                    <div className="absolute -inset-1 bg-[#7B2CBF]/20 rounded-lg blur-md"></div>
-                    <div className="relative bg-gradient-to-br from-[#7B2CBF]/15 via-[#9D4EDD]/10 to-[#7B2CBF]/15 border border-[#7B2CBF]/30 rounded-lg px-2 py-2 sm:px-3 sm:py-3 space-y-1 backdrop-blur-sm">
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
-                        <span>Price per Mint</span>
-                        <span className="font-medium">1 × {MINT_PRICE_BREAKDOWN.FOUNDER.mintPrice} ETH</span>
+                    <div className="absolute -inset-1 bg-[#7B2CBF]/20 rounded-lg blur-md pointer-events-none"></div>
+                    <div className="relative bg-gradient-to-br from-[#7B2CBF]/15 via-[#9D4EDD]/10 to-[#7B2CBF]/15 border border-[#7B2CBF]/30 rounded-lg px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 space-y-1 sm:space-y-1.5 md:space-y-2 backdrop-blur-sm">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
+                        <span className="truncate pr-1">Price per Mint</span>
+                        <span className="font-medium whitespace-nowrap">1 × {MINT_PRICE_BREAKDOWN.FOUNDER.mintPrice} ETH</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
                         <span>Subtotal</span>
                         <span className="font-medium">{MINT_PRICE_BREAKDOWN.FOUNDER.mintPrice} ETH</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
                         <span>Manifold Fee</span>
                         <span className="font-medium">{MINT_PRICE_BREAKDOWN.FOUNDER.manifoldFee} ETH</span>
                       </div>
                       <div className="h-px bg-gradient-to-r from-transparent via-[#7B2CBF]/40 to-transparent my-1" />
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/50">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/50">
                         <span>Mint on</span>
                         <span className="font-medium text-[#7B2CBF]">Base Network</span>
                       </div>
                       <div className="h-px bg-gradient-to-r from-transparent via-[#7B2CBF]/40 to-transparent my-1" />
-                      <div className="flex justify-between items-center text-xs sm:text-sm text-white font-bold">
+                      <div className="flex justify-between items-center text-xs sm:text-sm md:text-base text-white font-bold">
                         <span>Total</span>
                         <div className="relative">
-                          <div className="absolute inset-0 bg-[#7B2CBF] blur-md opacity-40"></div>
+                          <div className="absolute inset-0 bg-[#7B2CBF] blur-md opacity-40 pointer-events-none"></div>
                           <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-[#7B2CBF] to-[#9D4EDD] drop-shadow-[0_0_10px_rgba(123,44,191,0.6)]">{MINT_PRICE_BREAKDOWN.FOUNDER.total} ETH</span>
                         </div>
                       </div>
-                      <div className="text-center text-[9px] sm:text-[10px] text-white/40 mt-1">
+                      <div className="text-center text-[9px] sm:text-xs text-white/40 mt-0.5 sm:mt-1 pt-0.5 sm:pt-1">
                         (~${getUsdPrice(MINT_PRICES.FOUNDER)} + gas)
                       </div>
                     </div>
@@ -350,27 +352,27 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                 <Button
                   onClick={() => handleMint(NFT_CONFIG.TOKENS.FOUNDER.id, 'founder')}
                   disabled={isMintingFounder || mintSuccess.founder}
-                  className={`w-full relative overflow-hidden ${
+                  className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
                     mintSuccess.founder
                       ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
                       : 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:from-[#5A1F9A] hover:to-[#7B2CBF]'
-                  } text-white font-bold py-3 sm:py-4 rounded-xl transition-all shadow-[0_4px_30px_0_rgba(123,44,191,0.4)] hover:shadow-[0_6px_40px_0_rgba(123,44,191,0.6)] hover:scale-105 disabled:hover:scale-100 ${
+                  } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(123,44,191,0.4)] hover:shadow-[0_6px_40px_0_rgba(123,44,191,0.6)] hover:scale-105 disabled:hover:scale-100 ${
                     mintSuccess.founder ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
-                  } text-xs sm:text-sm`}
+                  } text-xs sm:text-sm md:text-base`}
                 >
                   {isMintingFounder ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
                       Minting...
                     </>
                   ) : mintSuccess.founder ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                       Minted!
                     </>
                   ) : (
                     <>
-                      <Shield className="w-4 h-4 mr-2" />
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                       Mint Founder
                     </>
                   )}
@@ -383,10 +385,11 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                     setManifoldTokenName('Founder Badge');
                     setShowManifoldModal(true);
                   }}
-                  className="w-full text-center text-[10px] text-white/40 hover:text-white/70 transition-colors py-1 flex items-center justify-center gap-1 group/alt"
+                  className="w-full text-center text-[9px] sm:text-xs text-white/40 hover:text-white/70 transition-colors py-1 sm:py-2 flex items-center justify-center gap-1 sm:gap-1.5 group/alt"
                 >
-                  <ExternalLink className="w-3 h-3 opacity-60 group-hover/alt:opacity-100" />
-                  <span>Alternative: Mint via Manifold</span>
+                  <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60 group-hover/alt:opacity-100" />
+                  <span className="hidden sm:inline">Alternative: Mint via Manifold</span>
+                  <span className="sm:hidden">Alt: Manifold</span>
                 </button>
               </div>
             </Card>
@@ -404,7 +407,7 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
             </div>
             
             {/* Glass morphism card */}
-            <Card className="relative bg-gradient-to-br from-[#001a2e]/95 via-[#00121f]/90 to-[#000000]/95 backdrop-blur-xl p-3 sm:p-6 rounded-2xl border border-[#00D4FF]/40 shadow-[0_8px_32px_0_rgba(0,212,255,0.25)]">
+            <Card className="relative bg-gradient-to-br from-[#001a2e]/95 via-[#00121f]/90 to-[#000000]/95 backdrop-blur-xl p-3 sm:p-5 md:p-6 lg:p-7 rounded-xl sm:rounded-2xl border border-[#00D4FF]/40 shadow-[0_8px_32px_0_rgba(0,212,255,0.25)]">
               {/* Floating particles effect */}
               <div className="absolute top-2 left-4 w-1 h-1 bg-[#00D4FF] rounded-full animate-ping pointer-events-none" style={{ animationDuration: '2s' }}></div>
               <div className="absolute top-4 right-8 w-1 h-1 bg-[#00BFFF] rounded-full animate-ping pointer-events-none" style={{ animationDelay: '1s', animationDuration: '3s' }}></div>
@@ -413,10 +416,10 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
               {/* Top accent line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF] to-transparent pointer-events-none"></div>
               
-              <div className="relative z-10 space-y-2 sm:space-y-4">
+              <div className="relative z-10 space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-5">
                 {/* NFT Image */}
                 <div className="relative">
-                  <div className="w-full aspect-square rounded-xl overflow-hidden border-2 border-[#00D4FF]/50 shadow-2xl shadow-[#00D4FF]/40">
+                  <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden border border-[#00D4FF]/50 sm:border-2 shadow-xl sm:shadow-2xl shadow-[#00D4FF]/40">
                     {believerMetadata?.image ? (
                       <img 
                         src={believerMetadata.image} 
@@ -425,64 +428,66 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#00D4FF] to-[#0099CC] flex items-center justify-center">
-                        <Shield className="w-12 h-12 sm:w-24 sm:h-24 text-white/40" />
+                        <Shield className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 text-white/40" />
                       </div>
                     )}
                   </div>
-                  <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gradient-to-r from-[#00D4FF] to-[#00BFFF] text-[#001F3F] border-0 shadow-lg text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1">
+                  <Badge className="absolute top-1 right-1 sm:top-2 sm:right-2 md:top-3 md:right-3 bg-gradient-to-r from-[#00D4FF] to-[#00BFFF] text-[#001F3F] border-0 shadow-lg text-[10px] sm:text-xs md:text-sm px-1.5 py-0.5 sm:px-2 sm:py-1">
                     Token #2
                   </Badge>
                 </div>
 
                 {/* NFT Info */}
-                <div className="space-y-1 sm:space-y-2">
-                  <h3 className="text-sm sm:text-xl font-bold text-white flex items-center gap-1 sm:gap-2">
-                    <span className="truncate">{believerMetadata?.name || 'Base Tribe Believer'}</span>
-                    <Sparkles className="w-3 h-3 sm:w-5 sm:h-5 text-[#00D4FF] flex-shrink-0 drop-shadow-[0_0_10px_rgba(0,212,255,0.8)]" />
-                  </h3>
-                  <p 
-                    className="text-white/70 text-[10px] sm:text-sm line-clamp-2 cursor-pointer hover:text-white/90 transition-colors"
-                    onClick={() => {
-                      setSelectedNFT({
-                        name: believerMetadata?.name || 'Base Tribe Believer',
-                        description: believerMetadata?.description || 'I believe in Base and its tribe'
-                      });
-                      setShowDescriptionModal(true);
-                    }}
-                  >
-                    {believerMetadata?.description || 'I believe in Base and its tribe'}
-                  </p>
+                <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
+                  <div className="space-y-0.5 sm:space-y-1 md:space-y-1.5">
+                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-white flex items-center gap-1 sm:gap-2">
+                      <span className="truncate">{believerMetadata?.name || 'Base Tribe Believer'}</span>
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#00D4FF] flex-shrink-0 drop-shadow-[0_0_10px_rgba(0,212,255,0.8)]" />
+                    </h3>
+                    <p 
+                      className="text-white/70 text-[10px] sm:text-xs md:text-sm leading-snug sm:leading-relaxed line-clamp-2 cursor-pointer hover:text-white/90 transition-colors"
+                      onClick={() => {
+                        setSelectedNFT({
+                          name: believerMetadata?.name || 'Base Tribe Believer',
+                          description: believerMetadata?.description || 'I believe in Base and its tribe'
+                        });
+                        setShowDescriptionModal(true);
+                      }}
+                    >
+                      {believerMetadata?.description || 'I believe in Base and its tribe'}
+                    </p>
+                  </div>
                   
                   {/* Price Breakdown - Enhanced */}
                   <div className="relative overflow-hidden group/price">
-                    <div className="absolute -inset-1 bg-[#00D4FF]/20 rounded-lg blur-md"></div>
-                    <div className="relative bg-gradient-to-br from-[#00D4FF]/15 via-[#00BFFF]/10 to-[#00D4FF]/15 border border-[#00D4FF]/30 rounded-lg px-2 py-2 sm:px-3 sm:py-3 space-y-1 backdrop-blur-sm">
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
-                        <span>Price per Mint</span>
-                        <span className="font-medium">1 × {MINT_PRICE_BREAKDOWN.BELIEVER.mintPrice} ETH</span>
+                    <div className="absolute -inset-1 bg-[#00D4FF]/20 rounded-lg blur-md pointer-events-none"></div>
+                    <div className="relative bg-gradient-to-br from-[#00D4FF]/15 via-[#00BFFF]/10 to-[#00D4FF]/15 border border-[#00D4FF]/30 rounded-lg px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 space-y-1 sm:space-y-1.5 md:space-y-2 backdrop-blur-sm">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
+                        <span className="truncate pr-1">Price per Mint</span>
+                        <span className="font-medium whitespace-nowrap">1 × {MINT_PRICE_BREAKDOWN.BELIEVER.mintPrice} ETH</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
                         <span>Subtotal</span>
                         <span className="font-medium">{MINT_PRICE_BREAKDOWN.BELIEVER.mintPrice} ETH</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/60">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/60">
                         <span>Manifold Fee</span>
                         <span className="font-medium">{MINT_PRICE_BREAKDOWN.BELIEVER.manifoldFee} ETH</span>
                       </div>
                       <div className="h-px bg-gradient-to-r from-transparent via-[#00D4FF]/40 to-transparent my-1" />
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-white/50">
+                      <div className="flex justify-between items-center text-[10px] sm:text-xs md:text-sm text-white/50">
                         <span>Mint on</span>
                         <span className="font-medium text-[#00D4FF]">Base Network</span>
                       </div>
                       <div className="h-px bg-gradient-to-r from-transparent via-[#00D4FF]/40 to-transparent my-1" />
-                      <div className="flex justify-between items-center text-xs sm:text-sm text-white font-bold">
+                      <div className="flex justify-between items-center text-xs sm:text-sm md:text-base text-white font-bold">
                         <span>Total</span>
                         <div className="relative">
-                          <div className="absolute inset-0 bg-[#00D4FF] blur-md opacity-40"></div>
+                          <div className="absolute inset-0 bg-[#00D4FF] blur-md opacity-40 pointer-events-none"></div>
                           <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-[#00D4FF] to-[#00BFFF] drop-shadow-[0_0_10px_rgba(0,212,255,0.6)]">{MINT_PRICE_BREAKDOWN.BELIEVER.total} ETH</span>
                         </div>
                       </div>
-                      <div className="text-center text-[9px] sm:text-[10px] text-white/40 mt-1">
+                      <div className="text-center text-[9px] sm:text-xs text-white/40 mt-0.5 sm:mt-1 pt-0.5 sm:pt-1">
                         (~${getUsdPrice(MINT_PRICES.BELIEVER)} + gas)
                       </div>
                     </div>
@@ -493,27 +498,27 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                 <Button
                   onClick={() => handleMint(NFT_CONFIG.TOKENS.BELIEVER.id, 'believer')}
                   disabled={isMintingBeliever || mintSuccess.believer}
-                  className={`w-full relative overflow-hidden ${
+                  className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
                     mintSuccess.believer
                       ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
                       : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:from-[#0099CC] hover:to-[#00D4FF]'
-                  } text-white font-bold py-3 sm:py-4 rounded-xl transition-all shadow-[0_4px_30px_0_rgba(0,212,255,0.4)] hover:shadow-[0_6px_40px_0_rgba(0,212,255,0.6)] hover:scale-105 disabled:hover:scale-100 ${
+                  } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(0,212,255,0.4)] hover:shadow-[0_6px_40px_0_rgba(0,212,255,0.6)] hover:scale-105 disabled:hover:scale-100 ${
                     mintSuccess.believer ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
-                  } text-xs sm:text-sm`}
+                  } text-xs sm:text-sm md:text-base`}
                 >
                   {isMintingBeliever ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
                       Minting...
                     </>
                   ) : mintSuccess.believer ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                       Minted!
                     </>
                   ) : (
                     <>
-                      <Shield className="w-4 h-4 mr-2" />
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                       Mint Believer
                     </>
                   )}
@@ -526,10 +531,11 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                     setManifoldTokenName('Believer Badge');
                     setShowManifoldModal(true);
                   }}
-                  className="w-full text-center text-[10px] text-white/40 hover:text-white/70 transition-colors py-1 flex items-center justify-center gap-1 group/alt"
+                  className="w-full text-center text-[9px] sm:text-xs text-white/40 hover:text-white/70 transition-colors py-1 sm:py-2 flex items-center justify-center gap-1 sm:gap-1.5 group/alt"
                 >
-                  <ExternalLink className="w-3 h-3 opacity-60 group-hover/alt:opacity-100" />
-                  <span>Alternative: Mint via Manifold</span>
+                  <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60 group-hover/alt:opacity-100" />
+                  <span className="hidden sm:inline">Alternative: Mint via Manifold</span>
+                  <span className="sm:hidden">Alt: Manifold</span>
                 </button>
               </div>
             </Card>

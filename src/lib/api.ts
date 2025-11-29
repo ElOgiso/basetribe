@@ -192,7 +192,17 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
         console.log(`🔄 Fetching profile data for ${leaderboardData.length} users...`);
         
         // Collect all FIDs (Neynar supports up to 100 FIDs per request)
-        const fids = leaderboardData.map(entry => entry.farcaster_fid).slice(0, 100);
+        // Filter out invalid/empty FIDs
+        const fids = leaderboardData
+          .map(entry => entry.farcaster_fid)
+          .filter(fid => fid && fid !== '0' && fid !== '')
+          .slice(0, 100);
+        
+        if (fids.length === 0) {
+          console.log('ℹ️ No valid FIDs to fetch profiles for');
+          return leaderboardData;
+        }
+        
         const fidsParam = fids.join(',');
         
         // Use serverless API route to fetch profiles (keeps API key secure)
@@ -206,7 +216,16 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
           }
         );
 
+        console.log(`📡 Profile endpoint response status: ${profileResponse.status}`);
+
         if (profileResponse.ok) {
+          const contentType = profileResponse.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            console.warn(`⚠️ Profile endpoint returned non-JSON response (${contentType}) - API route may not be deployed`);
+            console.log('ℹ️ Continuing without profile images. Deploy to Vercel for profile image support.');
+            return leaderboardData;
+          }
+          
           const profileData = await profileResponse.json();
           const users = profileData.users || [];
           
@@ -235,10 +254,11 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
           
           console.log(`✅ Updated ${users.length} leaderboard entries with profile images`);
         } else {
-          console.warn(`⚠️ Profile fetch returned status ${profileResponse.status}`);
+          console.warn(`⚠️ Profile fetch returned status ${profileResponse.status} - API route may not be available`);
+          console.log('ℹ️ Continuing without profile images. Deploy to Vercel for profile image support.');
         }
       } catch (profileError) {
-        console.warn('⚠️ Could not fetch profile data, continuing without images:', profileError);
+        console.log('ℹ️ Profile images unavailable - this is normal in local dev. Deploy to Vercel for full functionality.');
       }
     }
     
@@ -282,43 +302,6 @@ export async function fetchFarcasterProfile(fid: string): Promise<{
   } catch (error) {
     console.error('Error fetching Farcaster profile:', error);
     return null;
-  }
-}
-
-// Fetch engagement data for current session
-export async function fetchEngagementData(): Promise<EngagementData[]> {
-  try {
-    const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Engagements!A:K`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) return [];
-    
-    const data = await response.json();
-    const rows = data.values;
-    
-    if (!rows || rows.length < 2) return [];
-
-    return rows.slice(1).map((row: string[]) => ({
-      session_date: row[0] || '',
-      timestamp: new Date(row[1] || Date.now()),
-      session_time: row[2] || '',
-      session_index: row[3] || '',
-      telegram_id: row[4] || '',
-      telegram_username: row[5] || '',
-      farcaster_username: row[6] || '',
-      cast_hash: row[7] || '',
-      link: row[8] || '',
-      status: row[9] || '',
-    }));
-  } catch (error) {
-    console.error('Error fetching engagement data:', error);
-    return [];
   }
 }
 
@@ -682,5 +665,143 @@ export async function getUserByWallet(walletAddress: string): Promise<UserData |
   } catch (error) {
     console.error('Error fetching user by wallet:', error);
     return null;
+  }
+}
+
+// ============================================
+// ACTIVITY FEED DATA FETCHING
+// ============================================
+
+export interface ActivityFeedItem {
+  // Engagement data from Engagements sheet
+  session_date: string;
+  timestamp: string;
+  session_time: string;
+  session_index: string;
+  telegram_id: string;
+  telegram_username: string;
+  farcaster_username: string;
+  cast_hash: string;
+  link: string;
+  status: string;
+  checked_at: string;
+  
+  // User metadata from Members sheet
+  farcaster_fid: string;
+  stars: number;
+  defaults: number;
+  streak_count: number;
+  btribe_balance: number;
+  ban_status: string;
+  probation_count: number;
+  pfp_url?: string;
+}
+
+/**
+ * Fetch all activity feed items from Engagements sheet
+ * Joins with user data from Users sheet for full metadata
+ */
+export async function fetchActivityFeed(limit: number = 50): Promise<ActivityFeedItem[]> {
+  try {
+    console.log('📥 Fetching activity feed data...');
+    
+    // Fetch engagements data
+    const engagementsResponse = await fetch(
+      `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=Engagements`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+        },
+        mode: 'cors',
+        cache: 'no-cache'
+      }
+    );
+
+    if (!engagementsResponse.ok) {
+      throw new Error(`HTTP error! status: ${engagementsResponse.status}`);
+    }
+
+    const engagementsText = await engagementsResponse.text();
+    const engagementsJsonText = engagementsText.substring(47, engagementsText.length - 2);
+    const engagementsData = JSON.parse(engagementsJsonText);
+
+    // Fetch users data for joining
+    const usersResponse = await fetch(
+      `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=Users`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+        },
+        mode: 'cors',
+        cache: 'no-cache'
+      }
+    );
+
+    const usersText = await usersResponse.text();
+    const usersJsonText = usersText.substring(47, usersText.length - 2);
+    const usersData = JSON.parse(usersJsonText);
+
+    // Create a map of farcaster_username -> user data for quick lookup
+    const usersMap = new Map<string, any>();
+    usersData.table.rows.forEach((row: any) => {
+      const username = row.c[2]?.v; // Column C: farcaster_username
+      if (username) {
+        usersMap.set(username, row);
+      }
+    });
+
+    // Process engagement rows and join with user data
+    const activityItems: ActivityFeedItem[] = [];
+    const rows = engagementsData.table.rows || [];
+
+    for (const row of rows.slice(-limit).reverse()) { // Get last N items, newest first
+      const farcasterUsername = row.c[6]?.v || ''; // Column G: farcaster_username
+      
+      // Skip if username is empty or is the header row
+      if (!farcasterUsername || farcasterUsername === 'farcaster_username') {
+        continue;
+      }
+      
+      const userRow = usersMap.get(farcasterUsername);
+
+      if (!userRow) {
+        console.warn(`⚠️ User not found for username: ${farcasterUsername}`);
+        continue;
+      }
+
+      const activityItem: ActivityFeedItem = {
+        // Engagement data
+        session_date: row.c[0]?.v || '', // Column A
+        timestamp: row.c[1]?.v || '', // Column B
+        session_time: row.c[2]?.v || '', // Column C
+        session_index: row.c[3]?.v || '', // Column D
+        telegram_id: row.c[4]?.v || '', // Column E
+        telegram_username: row.c[5]?.v || '', // Column F
+        farcaster_username: farcasterUsername, // Column G
+        cast_hash: row.c[7]?.v || '', // Column H
+        link: row.c[8]?.v || '', // Column I
+        status: row.c[9]?.v || '', // Column J
+        checked_at: row.c[10]?.v || '', // Column K
+        
+        // User metadata
+        farcaster_fid: String(userRow.c[3]?.v || ''), // Column D in Users
+        stars: parseInt(userRow.c[8]?.v) || 0, // Column I in Users
+        defaults: parseInt(userRow.c[9]?.v) || 0, // Column J in Users
+        streak_count: parseInt(userRow.c[4]?.v) || 0, // Column E in Users (session_streak)
+        btribe_balance: parseFloat(userRow.c[10]?.v) || 0, // Column K in Users
+        ban_status: userRow.c[7]?.v || 'none', // Column H in Users
+        probation_count: parseInt(userRow.c[14]?.v) || 0, // Column O in Users
+      };
+
+      activityItems.push(activityItem);
+    }
+
+    console.log(`✅ Fetched ${activityItems.length} activity feed items`);
+    return activityItems;
+  } catch (error) {
+    console.error('❌ Error fetching activity feed:', error);
+    return [];
   }
 }
