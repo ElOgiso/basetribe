@@ -4,7 +4,7 @@
 import './styles/globals.css';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
-import { OnchainKitProvider } from '@coinbase/onchainkit';
+import { OnchainKitProvider } from '@coinbase/onchainkit'; 
 import { base } from 'viem/chains';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Button } from './components/ui/button';
