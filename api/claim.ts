@@ -69,7 +69,7 @@ async function claimBTRIBE(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Connect to Base network
-    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/mUXD-chbg1kxeE-kxt0Fr';
+    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/ZvCVwfVXrHA4UtKHlg8uchxYB2OBoiOe';
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const treasuryWallet = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
     
@@ -137,7 +137,7 @@ async function claimJESSE(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/mUXD-chbg1kxeE-kxt0Fr';
+    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/ZvCVwfVXrHA4UtKHlg8uchxYB2OBoiOe';
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const treasuryWallet = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
     
@@ -201,7 +201,7 @@ async function claimUSDC(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/mUXD-chbg1kxeE-kxt0Fr';
+    const RPC_URL = process.env.RPC_PROVIDER_URL || 'https://base-mainnet.g.alchemy.com/v2/ZvCVwfVXrHA4UtKHlg8uchxYB2OBoiOe';
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const treasuryWallet = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
     
