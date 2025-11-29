@@ -3,7 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
-            "@coinbase/onchainkit": "^1.1.2",
+           "@coinbase/onchainkit": "latest",
             "@farcaster/frame-sdk": "^0.0.64",
             "@farcaster/miniapp-sdk": "*",
             "@radix-ui/react-accordion": "^1.2.3",
