@@ -123,7 +123,7 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
               <div className="relative">
                 <div className="absolute inset-0 bg-[#39FF14]/30 blur-lg rounded-full animate-pulse" />
                 <img 
-                  src={baseTribeLogo} 
+                  src={tribeLogo} 
                   alt="BaseTribe" 
                   className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-[#39FF14] shadow-lg"
                 />
