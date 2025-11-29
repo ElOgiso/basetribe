@@ -10,7 +10,6 @@ import { updateMembershipNFT } from '../lib/api';
 import { fetchFidFromWallet } from '../lib/claiming';
 import type { NFTMetadata } from '../lib/nft';
 import bannerImage from '../assets/nftmint.png';
-import { ManifoldMintButton } from './ManifoldMintButton';
 
 interface ManifoldNFTClaimProps {
   isConnected: boolean;
@@ -349,15 +348,35 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                   </div>
                 </div>
 
-                {/* Premium Mint Button - Using Manifold Direct Integration */}
-                <div className="min-h-[40px] sm:min-h-[48px] md:min-h-[52px]">
-                  <ManifoldMintButton
-                    instanceId={4117309680n}
-                    priceEth="0.00617"
-                    badgeName="Founder Badge"
-                    badgeColor="purple"
-                  />
-                </div>
+                {/* Premium Mint Button */}
+                <Button
+                  onClick={() => handleMint(NFT_CONFIG.TOKENS.FOUNDER.id, 'founder')}
+                  disabled={isMintingFounder || mintSuccess.founder}
+                  className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
+                    mintSuccess.founder
+                      ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
+                      : 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:from-[#5A1F9A] hover:to-[#7B2CBF]'
+                  } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(123,44,191,0.4)] hover:shadow-[0_6px_40px_0_rgba(123,44,191,0.6)] hover:scale-105 disabled:hover:scale-100 ${
+                    mintSuccess.founder ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
+                  } text-xs sm:text-sm md:text-base`}
+                >
+                  {isMintingFounder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
+                      Minting...
+                    </>
+                  ) : mintSuccess.founder ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Minted!
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Mint Founder
+                    </>
+                  )}
+                </Button>
                 
                 {/* Failsafe: Manifold Widget Button */}
                 <button
@@ -475,15 +494,35 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
                   </div>
                 </div>
 
-                {/* Premium Mint Button - Using Manifold Direct Integration */}
-                <div className="min-h-[40px] sm:min-h-[48px] md:min-h-[52px]">
-                  <ManifoldMintButton
-                    instanceId={4117350640n}
-                    priceEth="0.001"
-                    badgeName="Believer Badge"
-                    badgeColor="cyan"
-                  />
-                </div>
+                {/* Premium Mint Button */}
+                <Button
+                  onClick={() => handleMint(NFT_CONFIG.TOKENS.BELIEVER.id, 'believer')}
+                  disabled={isMintingBeliever || mintSuccess.believer}
+                  className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
+                    mintSuccess.believer
+                      ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
+                      : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:from-[#0099CC] hover:to-[#00D4FF]'
+                  } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(0,212,255,0.4)] hover:shadow-[0_6px_40px_0_rgba(0,212,255,0.6)] hover:scale-105 disabled:hover:scale-100 ${
+                    mintSuccess.believer ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
+                  } text-xs sm:text-sm md:text-base`}
+                >
+                  {isMintingBeliever ? (
+                    <>
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
+                      Minting...
+                    </>
+                  ) : mintSuccess.believer ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Minted!
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                      Mint Believer
+                    </>
+                  )}
+                </Button>
                 
                 {/* Failsafe: Manifold Widget Button */}
                 <button

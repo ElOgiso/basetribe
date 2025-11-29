@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Share2, Download, Sparkles, Trophy, Coins, TrendingUp } from 'lucide-react';
+import { X, Share2, Download, Sparkles, Trophy, Coins, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import type { UserData } from '../lib/types';
@@ -16,6 +16,7 @@ interface WelcomeBannerProps {
 
 export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerProps) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,48 +25,144 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
     }
   }, [isVisible]);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'BaseTribe - Building on Base Together',
-          text: `I'm part of the BaseTribe! 🚀 ${userData?.btribe_balance || 0} $BTRIBE earned | ${userData?.stars || 0} ⭐ Stars | Join the movement!`,
-          url: window.location.origin,
-        });
-      } catch (err) {
-        console.log('Share cancelled or failed');
-      }
-    } else {
-      // Fallback: copy to clipboard
-      const shareText = `I'm part of the BaseTribe! 🚀 ${userData?.btribe_balance || 0} $BTRIBE earned | ${userData?.stars || 0} ⭐ Stars | Join the movement! ${window.location.origin}`;
-      navigator.clipboard.writeText(shareText);
-      alert('Share text copied to clipboard!');
-    }
-  };
+  const captureImage = async (): Promise<Blob | null> => {
+    if (!bannerRef.current) return null;
 
-  const handleDownload = async () => {
-    // Import html2canvas dynamically
-    const html2canvas = (await import('html2canvas')).default;
-    
-    if (bannerRef.current) {
+    try {
+      setIsProcessing(true);
+
       // Hide buttons before capture
       const buttons = bannerRef.current.querySelectorAll('.hide-on-capture');
       buttons.forEach(btn => (btn as HTMLElement).style.display = 'none');
 
+      // Import html2canvas dynamically
+      const html2canvas = (await import('html2canvas')).default;
+
+      // Capture the banner
       const canvas = await html2canvas(bannerRef.current, {
-        backgroundColor: null,
+        backgroundColor: '#001F3F',
         scale: 2,
+        logging: false,
+        useCORS: true,
       });
 
       // Show buttons again
       buttons.forEach(btn => (btn as HTMLElement).style.display = '');
+      setIsProcessing(false);
 
-      // Download
-      const link = document.createElement('a');
-      link.download = `basetribe-${userData?.farcaster_username || 'member'}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
+      // Convert canvas to blob
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/png');
+      });
+    } catch (error) {
+      console.error('Failed to capture image:', error);
+      
+      // Always restore buttons even on error
+      const buttons = bannerRef.current?.querySelectorAll('.hide-on-capture');
+      buttons?.forEach(btn => (btn as HTMLElement).style.display = '');
+      setIsProcessing(false);
+      
+      alert('Failed to capture image. Please try again.');
+      return null;
     }
+  };
+
+  const handleShare = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Capture the banner as an image
+      const blob = await captureImage();
+      
+      if (!blob) {
+        setIsProcessing(false);
+        return;
+      }
+
+      const file = new File([blob], `basetribe-${userData?.farcaster_username || 'member'}.png`, { 
+        type: 'image/png' 
+      });
+
+      const shareText = `I'm part of the BaseTribe! 🚀 ${userData?.btribe_balance || 0} $BTRIBE earned | ${userData?.stars || 0} ⭐ Stars | Join the movement!`;
+
+      // Check if navigator.share supports files
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'BaseTribe - Building on Base Together',
+            text: shareText,
+            url: window.location.origin,
+          });
+          setIsProcessing(false);
+        } catch (err: any) {
+          // User cancelled or share failed
+          if (err.name !== 'AbortError') {
+            console.error('Share failed:', err);
+            // Fallback to download
+            downloadBlob(blob, `basetribe-${userData?.farcaster_username || 'member'}.png`);
+          }
+          setIsProcessing(false);
+        }
+      } else {
+        // Fallback: Download the image instead
+        downloadBlob(blob, `basetribe-${userData?.farcaster_username || 'member'}.png`);
+        
+        // Also copy text to clipboard
+        try {
+          await navigator.clipboard.writeText(`${shareText} ${window.location.origin}`);
+          alert('Image downloaded and share text copied to clipboard!');
+        } catch {
+          alert('Image downloaded successfully!');
+        }
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      alert('Failed to share. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      setIsProcessing(true);
+
+      // Capture the banner as an image
+      const blob = await captureImage();
+      
+      if (!blob) {
+        setIsProcessing(false);
+        return;
+      }
+
+      // Download the image
+      downloadBlob(blob, `basetribe-${userData?.farcaster_username || 'member'}.png`);
+      
+      setIsProcessing(false);
+      
+      // Show success feedback
+      setTimeout(() => {
+        alert('✅ Banner downloaded successfully!');
+      }, 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (!isVisible) return null;
@@ -122,7 +219,7 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
             <div className="flex items-center justify-center mb-3 sm:mb-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-[#39FF14]/30 blur-lg rounded-full animate-pulse" />
-                <img 
+               <img 
                  src={baseTribeLogo}
                   alt="BaseTribe" 
                   className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-[#39FF14] shadow-lg"
@@ -226,17 +323,31 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
             <div className="hide-on-capture flex flex-col gap-2 sm:gap-3">
               <Button
                 onClick={handleShare}
-                className="w-full bg-gradient-to-r from-[#39FF14] to-green-500 hover:from-[#39FF14]/90 hover:to-green-500/90 text-black font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-[#39FF14]/50 transition-all touch-manipulation"
+                disabled={isProcessing}
+                className="w-full bg-gradient-to-r from-[#39FF14] to-green-500 hover:from-[#39FF14]/90 hover:to-green-500/90 text-black font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-[#39FF14]/50 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                <span className="text-sm sm:text-base">Share Stats</span>
+                {isProcessing ? (
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
+                ) : (
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                )}
+                <span className="text-sm sm:text-base">
+                  {isProcessing ? 'Processing...' : 'Share Stats'}
+                </span>
               </Button>
               <Button
                 onClick={handleDownload}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90 text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all touch-manipulation"
+                disabled={isProcessing}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90 text-white font-bold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                <span className="text-sm sm:text-base">Download</span>
+                {isProcessing ? (
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                )}
+                <span className="text-sm sm:text-base">
+                  {isProcessing ? 'Processing...' : 'Download'}
+                </span>
               </Button>
             </div>
 
