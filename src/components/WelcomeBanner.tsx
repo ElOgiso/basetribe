@@ -6,7 +6,7 @@ import { X, Share2, Download, Sparkles, Trophy, Coins, TrendingUp } from 'lucide
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import type { UserData } from '../lib/types';
-import tribeLogo from './assets/logo.png';
+import baseTribeLogo from '../assets/logo.png';
 
 interface WelcomeBannerProps {
   userData: UserData | null;
