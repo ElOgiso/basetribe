@@ -1,6 +1,5 @@
-// src/components/ManifoldMintButton.tsx
 import { useState } from 'react';
-import { Button } from './ui/button'; // Ensure this path matches your project
+import { Button } from './ui/button';
 import { Loader2, Sparkles, CheckCircle2, Shield } from 'lucide-react';
 import { useAccount, useWriteContract } from 'wagmi';
 import { base } from 'wagmi/chains';
@@ -49,6 +48,8 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
       ],
       value: parseEther(priceEth),
       chainId: base.id,
+      // 👇 THIS LINE FIXES THE "ERROR GENERATING TRANSACTION" BUG
+      gas: 300000n 
     });
   };
 
