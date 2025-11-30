@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Loader2, ArrowDownUp, CheckCircle2 } from 'lucide-react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { parseEther } from 'viem';
 
 interface Props {
   amountEth: string;
+  walletAddress: string | null;
+  isConnected: boolean;
   onSuccess?: () => void;
 }
 
 // Uniswap V3 Router on Base
 const ROUTER_ADDRESS = '0x2626664c2603336E57B271c5C0b26F421741e481';
 const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';
-const BTRIBE_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6'; // Your Token
+const BTRIBE_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6';
 
-export function UniswapSwapButton({ amountEth, onSuccess }: Props) {
-  const { isConnected, address } = useAccount();
+export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuccess }: Props) {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -24,7 +25,7 @@ export function UniswapSwapButton({ amountEth, onSuccess }: Props) {
   const [swapped, setSwapped] = useState(false);
 
   const handleSwap = () => {
-    if (!address || !amountEth || amountEth === '0') return;
+    if (!walletAddress || !amountEth || amountEth === '0') return;
 
     // Uniswap V3 ExactInputSingle Params
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
@@ -34,7 +35,7 @@ export function UniswapSwapButton({ amountEth, onSuccess }: Props) {
       tokenIn: WETH_ADDRESS,
       tokenOut: BTRIBE_ADDRESS,
       fee: feeTier,
-      recipient: address,
+      recipient: walletAddress as `0x${string}`,
       deadline: BigInt(deadline),
       amountIn: parseEther(amountEth),
       amountOutMinimum: 0n, // 0 = accept market price (prevents "Output too low" errors)
@@ -42,7 +43,7 @@ export function UniswapSwapButton({ amountEth, onSuccess }: Props) {
     };
 
     writeContract({
-      address: ROUTER_ADDRESS,
+      address: ROUTER_ADDRESS as `0x${string}`,
       abi: [{
         "inputs": [
           {
@@ -68,9 +69,9 @@ export function UniswapSwapButton({ amountEth, onSuccess }: Props) {
       }],
       functionName: 'exactInputSingle',
       args: [params],
-      value: parseEther(amountEth), // Sending ETH value directly
+      value: parseEther(amountEth),
       chainId: base.id,
-      gas: 500000n // ⚡ CRITICAL: Buffer to prevent "Error generating transaction"
+      gas: 500000n
     });
   };
 

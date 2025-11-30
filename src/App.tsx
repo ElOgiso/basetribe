@@ -12,6 +12,7 @@ import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Alert, AlertDescription } from './components/ui/alert';
+import { toast, Toaster } from 'sonner';
 import { 
   Home, 
   Trophy, 
@@ -47,6 +48,7 @@ import tribeLogo from './assets/logo.png';
 import qrCodeImage from './assets/qrcode.png';
 import donationBackground from './assets/qrbackground.png';
 import tribeBanner from './assets/meetthetribe.png';
+
 
 // Components
 import { TokenScroller } from './components/TokenScroller';
@@ -169,11 +171,11 @@ function AppContent() {
       setAddress(account);
       setIsConnected(true);
       loadUserData(account);
+      // Store wallet connection in localStorage
+      localStorage.setItem('basetribe_wallet_connected', 'true');
+      localStorage.setItem('basetribe_wallet_address', account);
     } else {
-      setNotification({
-        type: 'error',
-        message: 'Please install MetaMask or another Web3 wallet',
-      });
+      toast.error('Please install MetaMask or another Web3 wallet');
     }
   };
 
@@ -184,6 +186,9 @@ function AppContent() {
     setProfileData(null);
     setIsMember(false);
     setUserFid(null);
+    // Clear localStorage
+    localStorage.removeItem('basetribe_wallet_connected');
+    localStorage.removeItem('basetribe_wallet_address');
   };
 
   // Load real user data from Google Sheets
@@ -394,10 +399,7 @@ function AppContent() {
       const result = await claimTokens(address, userData.btribe_balance, fid);
 
       if (result.success) {
-        setNotification({
-          type: 'success',
-          message: `Successfully claimed ${userData.btribe_balance} $BTRIBE! TX: ${result.txHash?.slice(0, 10)}...`,
-        });
+        toast.success(`Successfully claimed ${userData.btribe_balance} $BTRIBE! TX: ${result.txHash?.slice(0, 10)}...`);
         
         // Update local state with new balance (should be 0 after full claim)
         const newBalance = result.newBalance !== undefined ? result.newBalance : 0;
@@ -411,24 +413,15 @@ function AppContent() {
           } catch (updateError) {
             console.error('❌ Failed to update Google Sheets:', updateError);
             // Show error to user - this is critical
-            setNotification({
-              type: 'error',
-              message: 'Tokens claimed but failed to update balance record. Please contact support.',
-            });
+            toast.error('Tokens claimed but failed to update balance record. Please contact support.');
           }
         }
       } else {
-        setNotification({
-          type: 'error',
-          message: result.error || 'Failed to claim tokens. Please try again.',
-        });
+        toast.error(result.error || 'Failed to claim tokens. Please try again.');
       }
     } catch (error) {
       console.error('Claim error:', error);
-      setNotification({
-        type: 'error',
-        message: 'Failed to claim tokens. Please try again.',
-      });
+      toast.error('Failed to claim tokens. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -580,7 +573,14 @@ function AppContent() {
   // Auto-hide notifications
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => setNotification(null), 5000);
+      // Convert old notification state to toast
+      if (notification.type === 'success') {
+        toast.success(notification.message);
+      } else {
+        toast.error(notification.message);
+      }
+      // Clear notification after showing toast
+      const timer = setTimeout(() => setNotification(null), 100);
       return () => clearTimeout(timer);
     }
   }, [notification]);
@@ -603,6 +603,9 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#001F3F] via-[#002855] to-[#001F3F] overflow-x-hidden">
+      {/* Toaster for all notifications */}
+      <Toaster position="top-right" richColors theme="dark" />
+      
       {/* Welcome Banner - Shows on first visit */}
       <WelcomeBanner
         userData={userData}

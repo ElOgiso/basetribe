@@ -33,6 +33,8 @@ export function NFTMintButtons({ walletAddress, userFid, isConnected }: NFTMintB
             badgeName="Founder Badge"
             badgeColor="purple"
             userFid={userFid}
+            walletAddress={walletAddress}
+            isConnected={isConnected}
           />
           
           {/* Failsafe: Manifold Widget Button */}
@@ -58,6 +60,8 @@ export function NFTMintButtons({ walletAddress, userFid, isConnected }: NFTMintB
             badgeName="Believer Badge"
             badgeColor="cyan"
             userFid={userFid}
+            walletAddress={walletAddress}
+            isConnected={isConnected}
           />
           
           {/* Failsafe: Manifold Widget Button */}

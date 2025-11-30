@@ -144,7 +144,9 @@ export function BTribeSwap({ walletAddress, isConnected }: BTribeSwapProps) {
 
           {/* Swap Button */}
           <UniswapSwapButton 
-            amountEth={amountEth} 
+            amountEth={amountEth}
+            walletAddress={walletAddress}
+            isConnected={isConnected}
             onSuccess={() => {
               console.log('✅ Swap completed successfully!');
               // Optionally reset amount
