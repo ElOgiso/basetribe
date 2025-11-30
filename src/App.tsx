@@ -265,7 +265,7 @@ function AppContent() {
       // Step 2: Fetch user data from Google Sheets by FID
       const userData = await fetchUserDataByFID(fid);
       
-      if (!userData) {
+     if (!userData) {
         console.log('⚠️ No user data found in Google Sheets for FID:', fid);
         // FID exists but not in sheets - show zero balance
         const newUser: UserData = {
@@ -299,6 +299,15 @@ function AppContent() {
         };
         setUserData(newUser);
         setIsMember(false);
+        
+        // ✅ NEW: Still fetch Farcaster profile for new users
+        console.log('🎭 Fetching Farcaster profile for new user with FID:', fid);
+        const profile = await fetchFarcasterProfile(fid);
+        if (profile) {
+          console.log('✅ Profile fetched for new user:', profile);
+          setProfileData(profile);
+        }
+        
         setIsLoadingUserData(false);
         return;
       }

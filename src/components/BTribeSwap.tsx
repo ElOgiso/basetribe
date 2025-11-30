@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { ArrowDownUp, ExternalLink, Loader2 } from 'lucide-react';
-import { UniswapSwapButton } from './UniswapSwapButton';
+import { ZoraSwapButton } from './ZoraSwapButton';
 
 const BTRIBE_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6';
 
@@ -143,7 +143,7 @@ export function BTribeSwap({ walletAddress, isConnected }: BTribeSwapProps) {
           </div>
 
           {/* Swap Button */}
-          <UniswapSwapButton 
+          <ZoraSwapButton 
             amountEth={amountEth}
             walletAddress={walletAddress}
             isConnected={isConnected}

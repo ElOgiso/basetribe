@@ -34,6 +34,7 @@
             "@radix-ui/react-tooltip": "^1.1.8",
             "@tanstack/react-query": "^5.90.11",
             "@vercel/node": "*",
+            "@zoralabs/coins-sdk": "^0.3.3",
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
             "cmdk": "^1.1.1",
@@ -53,7 +54,7 @@
             "sonner": "^2.0.3",
             "tailwind-merge": "*",
             "vaul": "^1.1.2",
-            "viem": "2.21.7",
+            "viem": "^2.21.7",
             "wagmi": "2.12.33"
       },
       "devDependencies": {
