@@ -100,8 +100,11 @@ export function useFarcasterSDK() {
   } | null>(null);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    let isSubscribed = true;
+    
     const checkSDK = () => {
-      if (window.sdk) {
+      if (window.sdk && isSubscribed) {
         setIsLoaded(true);
         
         if (window.sdk.context?.client) {
@@ -112,13 +115,29 @@ export function useFarcasterSDK() {
             pfpUrl: window.sdk.context.client.pfpUrl,
           });
         }
+        
+        // Clear interval once SDK is loaded
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+          console.log('✅ Farcaster SDK loaded - stopped polling');
+        }
       }
     };
 
     checkSDK();
-    const interval = setInterval(checkSDK, 1000);
+    
+    // Only set interval if SDK not already loaded
+    if (!window.sdk) {
+      interval = setInterval(checkSDK, 1000);
+    }
 
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, []);
 
   return {

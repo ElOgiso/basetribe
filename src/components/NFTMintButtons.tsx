@@ -3,9 +3,7 @@ import { Button } from './ui/button';
 import { Shield, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { NFT_CONFIG } from '../lib/nft';
-import { mintNFT, waitForTransaction } from '../lib/nftMinting';
-import { updateMembershipNFT } from '../lib/api';
-import { fetchFidFromWallet } from '../lib/claiming';
+import { ManifoldMintButton } from './ManifoldMintButton';
 
 interface NFTMintButtonsProps {
   walletAddress: string | null;
@@ -14,95 +12,10 @@ interface NFTMintButtonsProps {
 }
 
 export function NFTMintButtons({ walletAddress, userFid, isConnected }: NFTMintButtonsProps) {
-  // Minting states
-  const [isMintingFounder, setIsMintingFounder] = useState(false);
-  const [isMintingBeliever, setIsMintingBeliever] = useState(false);
-  const [mintSuccess, setMintSuccess] = useState<{ founder: boolean; believer: boolean }>({ founder: false, believer: false });
-  const [mintError, setMintError] = useState<string | null>(null);
-  
   // Manifold widget modal states
   const [showManifoldModal, setShowManifoldModal] = useState(false);
   const [manifoldUrl, setManifoldUrl] = useState('');
   const [manifoldTokenName, setManifoldTokenName] = useState('');
-
-  const handleMint = async (tokenId: string, tokenName: 'founder' | 'believer') => {
-    if (!walletAddress) {
-      setMintError('Please connect your wallet first');
-      return;
-    }
-
-    const setMinting = tokenName === 'founder' ? setIsMintingFounder : setIsMintingBeliever;
-    
-    try {
-      setMinting(true);
-      setMintError(null);
-      
-      console.log(`🎨 Initiating ${tokenName} NFT mint...`);
-      
-      // Call mint function
-      const result = await mintNFT(tokenId, walletAddress);
-      
-      if (result.success && result.txHash) {
-        console.log('✅ Transaction submitted:', result.txHash);
-        
-        // Show success immediately
-        setMintSuccess(prev => ({ ...prev, [tokenName]: true }));
-        
-        // Update Google Sheets with NFT claim
-        try {
-          // Get FID - either from prop or fetch from wallet
-          let fid = userFid;
-          if (!fid) {
-            console.log('No FID provided, fetching from wallet...');
-            fid = await fetchFidFromWallet(walletAddress);
-          }
-          
-          if (fid) {
-            const nftType = tokenName === 'founder' ? 'FOUNDER' : 'BELIEVER';
-            console.log(`📝 Updating membershipNFT in Google Sheets for FID ${fid}...`);
-            
-            const updated = await updateMembershipNFT(
-              fid,
-              walletAddress,
-              result.txHash,
-              nftType
-            );
-            
-            if (updated) {
-              console.log('✅ Membership NFT updated in Google Sheets successfully');
-            } else {
-              console.warn('⚠️ Failed to update Google Sheets (mint still succeeded)');
-            }
-          } else {
-            console.warn('⚠️ No FID found for wallet, skipping Google Sheets update');
-          }
-        } catch (updateError) {
-          console.error('⚠️ Error updating Google Sheets (mint still succeeded):', updateError);
-        }
-        
-        // Wait for confirmation in background
-        waitForTransaction(result.txHash).then(confirmed => {
-          if (confirmed) {
-            console.log('✅ Transaction confirmed!');
-          }
-        });
-        
-        // Auto-hide success after 5 seconds
-        setTimeout(() => {
-          setMintSuccess(prev => ({ ...prev, [tokenName]: false }));
-        }, 5000);
-      } else {
-        setMintError(result.error || 'Failed to mint NFT');
-        setTimeout(() => setMintError(null), 5000);
-      }
-    } catch (error) {
-      console.error('Mint error:', error);
-      setMintError('An unexpected error occurred. Please try again.');
-      setTimeout(() => setMintError(null), 5000);
-    } finally {
-      setMinting(false);
-    }
-  };
 
   if (!isConnected) {
     return null;
@@ -110,45 +23,17 @@ export function NFTMintButtons({ walletAddress, userFid, isConnected }: NFTMintB
 
   return (
     <div className="space-y-4">
-      {/* Error notification */}
-      {mintError && (
-        <div className="bg-red-500/20 border-2 border-red-500 p-4 rounded-xl max-w-5xl mx-auto">
-          <p className="text-white text-center text-sm">{mintError}</p>
-        </div>
-      )}
-
       {/* Standalone Mint Buttons Section */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto">
         {/* Founder Mint Button */}
         <div className="space-y-2">
-          <Button
-            onClick={() => handleMint(NFT_CONFIG.TOKENS.FOUNDER.id, 'founder')}
-            disabled={isMintingFounder || mintSuccess.founder}
-            className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
-              mintSuccess.founder
-                ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
-                : 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:from-[#5A1F9A] hover:to-[#7B2CBF]'
-            } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(123,44,191,0.4)] hover:shadow-[0_6px_40px_0_rgba(123,44,191,0.6)] hover:scale-105 disabled:hover:scale-100 ${
-              mintSuccess.founder ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
-            } text-xs sm:text-sm md:text-base`}
-          >
-            {isMintingFounder ? (
-              <>
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
-                Minting...
-              </>
-            ) : mintSuccess.founder ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                Minted!
-              </>
-            ) : (
-              <>
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                Mint Founder
-              </>
-            )}
-          </Button>
+          <ManifoldMintButton
+            instanceId={4117309680n}
+            priceEth="0.00617"
+            badgeName="Founder Badge"
+            badgeColor="purple"
+            userFid={userFid}
+          />
           
           {/* Failsafe: Manifold Widget Button */}
           <button
@@ -167,34 +52,13 @@ export function NFTMintButtons({ walletAddress, userFid, isConnected }: NFTMintB
 
         {/* Believer Mint Button */}
         <div className="space-y-2">
-          <Button
-            onClick={() => handleMint(NFT_CONFIG.TOKENS.BELIEVER.id, 'believer')}
-            disabled={isMintingBeliever || mintSuccess.believer}
-            className={`w-full relative overflow-hidden min-h-[40px] sm:min-h-[48px] md:min-h-[52px] ${
-              mintSuccess.believer
-                ? 'bg-gradient-to-r from-[#39FF14] to-[#00FF41]'
-                : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:from-[#0099CC] hover:to-[#00D4FF]'
-            } text-white font-bold py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl transition-all shadow-[0_4px_30px_0_rgba(0,212,255,0.4)] hover:shadow-[0_6px_40px_0_rgba(0,212,255,0.6)] hover:scale-105 disabled:hover:scale-100 ${
-              mintSuccess.believer ? 'shadow-[0_6px_40px_0_rgba(57,255,20,0.6)]' : ''
-            } text-xs sm:text-sm md:text-base`}
-          >
-            {isMintingBeliever ? (
-              <>
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 animate-spin" />
-                Minting...
-              </>
-            ) : mintSuccess.believer ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                Minted!
-              </>
-            ) : (
-              <>
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
-                Mint Believer
-              </>
-            )}
-          </Button>
+          <ManifoldMintButton
+            instanceId={4117350640n}
+            priceEth="0.001"
+            badgeName="Believer Badge"
+            badgeColor="cyan"
+            userFid={userFid}
+          />
           
           {/* Failsafe: Manifold Widget Button */}
           <button

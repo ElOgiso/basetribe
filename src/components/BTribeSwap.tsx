@@ -1,380 +1,101 @@
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { Card } from './ui/card';
-import { Loader2, ArrowDownUp, CheckCircle, AlertCircle, ExternalLink, Info } from 'lucide-react';
-import { toast } from 'sonner';
+import { Input } from './ui/input';
+import { ArrowDownUp, ExternalLink, Loader2 } from 'lucide-react';
+import { UniswapSwapButton } from './UniswapSwapButton';
 
-const BTRIBE_TOKEN_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6';
-const WETH_ADDRESS = '0x4200000000000000000000000000000000000006'; // WETH on Base
-const UNISWAP_V3_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481'; // Uniswap V3 SwapRouter on Base
-const CHAIN_ID = 8453; // Base Mainnet
-const BASE_RPC_URL = 'https://base-mainnet.g.alchemy.com/v2/mUXD-chbg1kxeE-kxt0Fr8sE0VjGTt9w';
-const ZORA_API_URL = 'https://zora.co/api/graphql'; // ZORA GraphQL API
-
-// Uniswap V3 Router ABI (only the functions we need)
-const SWAP_ROUTER_ABI = [
-  'function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96)) external payable returns (uint256 amountOut)',
-  'function WETH9() external view returns (address)',
-];
-
-// ERC20 ABI for token operations
-const ERC20_ABI = [
-  'function approve(address spender, uint256 amount) external returns (bool)',
-  'function allowance(address owner, address spender) external view returns (uint256)',
-  'function balanceOf(address account) external view returns (uint256)',
-  'function decimals() external view returns (uint8)',
-];
+const BTRIBE_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6';
 
 interface BTribeSwapProps {
   walletAddress: string | null;
   isConnected: boolean;
 }
 
-interface ZoraCoinData {
-  tokenPrice?: {
-    usdcPrice?: string;
-    poolTokenPrice?: string;
-  };
-  marketCap?: string;
-  totalSupply?: string;
-  volume24h?: string;
-  uniswapV4PoolKey?: {
-    currency0: string;
-    currency1: string;
-    fee: number;
-    tickSpacing: number;
-    hooks: string;
-  };
-}
-
 export function BTribeSwap({ walletAddress, isConnected }: BTribeSwapProps) {
   const [amountEth, setAmountEth] = useState('0.01');
   const [estimatedBTribe, setEstimatedBTribe] = useState<string>('0');
-  const [isLoadingQuote, setIsLoadingQuote] = useState(false);
-  const [hasLiquidity, setHasLiquidity] = useState<boolean>(true);
-  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [tokenPriceUSD, setTokenPriceUSD] = useState<number>(0);
+  const [priceUsd, setPriceUsd] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch real-time price from ZORA API
+  // Fetch Live Price from DexScreener (Reliable & Free)
   useEffect(() => {
-    const fetchZoraPrice = async () => {
-      const ethAmount = parseFloat(amountEth);
-      if (isNaN(ethAmount) || ethAmount <= 0) {
+    const fetchPrice = async () => {
+      if (!amountEth || parseFloat(amountEth) <= 0) {
         setEstimatedBTribe('0');
         return;
       }
-
-      setIsLoadingQuote(true);
       
+      setLoading(true);
       try {
-        console.log('📊 Fetching $BTRIBE price from blockchain...');
-
-        // Since ZORA API has CORS issues, let's fetch directly from the Uniswap pool
-        // Create a provider using Alchemy RPC
-        const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+        // Fetch BTRIBE price pair data
+        const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${BTRIBE_ADDRESS}`);
+        const data = await res.json();
         
-        // Uniswap V3 Pool ABI (minimal - just for getting price data)
-        const POOL_ABI = [
-          'function slot0() external view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)',
-          'function token0() external view returns (address)',
-          'function token1() external view returns (address)',
-        ];
-
-        // Try to find the pool by computing the pool address
-        // For Uniswap V3 on Base, we need to check if a pool exists
-        // Common fee tiers: 100 (0.01%), 500 (0.05%), 3000 (0.3%), 10000 (1%)
-        
-        // For now, let's use a simpler approach: fetch from a price API that supports CORS
-        // Try CoinGecko API for ETH price, then calculate based on market data
-        
-        try {
-          // Fetch current ETH price in USD
-          const ethPriceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-          const ethPriceData = await ethPriceResponse.json();
-          const ethPriceUSD = ethPriceData.ethereum?.usd || 3500;
+        if (data.pairs && data.pairs.length > 0) {
+          const pair = data.pairs[0];
+          const price = parseFloat(pair.priceUsd);
+          const ethPrice = parseFloat(pair.priceNative); // Price in ETH
           
-          console.log('✅ Current ETH price: $', ethPriceUSD);
-
-          // For ZORA creator coins, we can estimate based on market cap or use a default rate
-          // Since we don't have direct access to ZORA API, use on-chain data
+          setPriceUsd(price);
           
-          // Try to read from the Uniswap pool contract directly
-          // First, let's try the most common pool address for BTRIBE/WETH
-          const POOL_FACTORY = '0x33128a8fC17869897dcE68Ed026d694621f6FDfD'; // Uniswap V3 Factory on Base
-          
-          // Calculate pool address (this is a simplified version)
-          // In production, you'd compute this properly using CREATE2
-          
-          // For now, let's provide a reasonable estimate based on creator coin standards
-          // Most ZORA creator coins start around $0.00001 - $0.0001 per token
-          const estimatedTokenPrice = 0.00003; // $0.00003 per token (adjust based on market)
-          
-          setTokenPriceUSD(estimatedTokenPrice);
-          
-          // Calculate how many tokens user will get
-          const ethValueInUSD = ethAmount * ethPriceUSD;
-          const btribeAmount = ethValueInUSD / estimatedTokenPrice;
-          
-          setEstimatedBTribe(btribeAmount.toFixed(2));
-          setHasLiquidity(true);
-          
-          console.log(`💹 ${ethAmount} ETH (~$${ethValueInUSD.toFixed(2)}) ≈ ${btribeAmount.toFixed(2)} $BTRIBE`);
-          console.log('ℹ️ Using estimated pricing - actual price may vary');
-          
-        } catch (priceError) {
-          // Silent fallback to default price
-          const ethPriceUSD = 3500;
-          const estimatedTokenPrice = 0.00003;
-          const ethValueInUSD = ethAmount * ethPriceUSD;
-          const btribeAmount = ethValueInUSD / estimatedTokenPrice;
-          
-          setEstimatedBTribe(btribeAmount.toFixed(2));
-          setTokenPriceUSD(estimatedTokenPrice);
-          setHasLiquidity(true);
+          // Calculate Output: Input / Price per Token in ETH
+          const estOutput = parseFloat(amountEth) / ethPrice;
+          setEstimatedBTribe(estOutput.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+        } else {
+          // Fallback if no pairs found
+          setEstimatedBTribe('...');
         }
-
-      } catch (error) {
-        console.error('❌ Error fetching price data:', error);
-        // Ultra-safe fallback
-        const ethPriceUSD = 3500;
-        const estimatedTokenPrice = 0.00003; // ~$0.00003 per token
-        const ethValueInUSD = ethAmount * ethPriceUSD;
-        const btribeAmount = ethValueInUSD / estimatedTokenPrice;
-        
-        setEstimatedBTribe(btribeAmount.toFixed(2));
-        setTokenPriceUSD(estimatedTokenPrice);
-        setHasLiquidity(true);
-        
-        console.log('⚠️ Using fallback pricing estimate');
+      } catch (e) {
+        console.error("Price fetch failed", e);
+        setEstimatedBTribe('...');
       } finally {
-        setIsLoadingQuote(false);
+        setLoading(false);
       }
     };
 
-    // Debounce the quote fetching
-    const timeoutId = setTimeout(fetchZoraPrice, 500);
-    return () => clearTimeout(timeoutId);
+    const timer = setTimeout(fetchPrice, 500); // Debounce
+    return () => clearTimeout(timer);
   }, [amountEth]);
 
-  const handleSwap = async () => {
-    if (!isConnected || !walletAddress) {
-      toast.error('Please connect your wallet first');
-      setErrorMessage('Please connect your wallet first');
-      setStatus('error');
-      return;
-    }
-
-    if (!window.ethereum) {
-      toast.error('No wallet detected. Please install MetaMask or another Web3 wallet.');
-      setErrorMessage('No wallet detected. Please install a Web3 wallet.');
-      setStatus('error');
-      return;
-    }
-
-    const ethAmount = parseFloat(amountEth);
-    if (isNaN(ethAmount) || ethAmount <= 0) {
-      toast.error('Please enter a valid ETH amount');
-      setErrorMessage('Please enter a valid ETH amount');
-      setStatus('error');
-      return;
-    }
-
-    if (ethAmount < 0.0001) {
-      toast.error('Minimum swap amount is 0.0001 ETH');
-      setErrorMessage('Minimum swap amount is 0.0001 ETH');
-      setStatus('error');
-      return;
-    }
-
-    if (!hasLiquidity) {
-      // Redirect to external DEX
-      const uniswapUrl = `https://app.uniswap.org/swap?outputCurrency=${BTRIBE_TOKEN_ADDRESS}&chain=base&inputCurrency=ETH`;
-      window.open(uniswapUrl, '_blank');
-      return;
-    }
-
-    setErrorMessage(null);
-    setStatus('pending');
-    setTxHash(null);
-
-    try {
-      // Check network
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      const currentChainId = parseInt(chainId, 16);
-      
-      if (currentChainId !== CHAIN_ID) {
-        // Request network switch to Base
-        toast.info('Please switch to Base network');
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }],
-          });
-        } catch (switchError: any) {
-          // If network doesn't exist, add it
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: `0x${CHAIN_ID.toString(16)}`,
-                chainName: 'Base',
-                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-                rpcUrls: [BASE_RPC_URL],
-                blockExplorerUrls: ['https://basescan.org']
-              }]
-            });
-          } else {
-            throw switchError;
-          }
-        }
-      }
-
-      console.log('🔄 Starting swap:', ethAmount, 'ETH for $BTRIBE');
-
-      // Create provider and signer
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      // Convert ETH amount to Wei
-      const amountInWei = ethers.parseEther(amountEth);
-
-      console.log('💰 Amount in Wei:', amountInWei.toString());
-
-      // Create Uniswap V3 Router contract instance
-      const routerContract = new ethers.Contract(
-        UNISWAP_V3_ROUTER,
-        SWAP_ROUTER_ABI,
-        signer
-      );
-
-      // Set deadline to 20 minutes from now
-      const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
-
-      // Calculate minimum amount out with 5% slippage tolerance
-      const estimatedAmount = parseFloat(estimatedBTribe);
-      const minAmountOut = estimatedAmount > 0 
-        ? ethers.parseUnits((estimatedAmount * 0.95).toFixed(18), 18)
-        : BigInt(0);
-
-      console.log('📝 Preparing swap params...');
-      console.log('💹 Expected output:', estimatedBTribe, '$BTRIBE');
-      console.log('💹 Minimum output:', ethers.formatUnits(minAmountOut, 18), '$BTRIBE');
-
-      // Swap parameters for Uniswap V3/V4
-      // ZORA creator coins may use Uniswap V4, but the router interface is similar
-      const params = {
-        tokenIn: WETH_ADDRESS,
-        tokenOut: BTRIBE_TOKEN_ADDRESS,
-        fee: 10000, // 1% fee tier (most likely for creator coins)
-        recipient: walletAddress,
-        deadline: deadline,
-        amountIn: amountInWei,
-        amountOutMinimum: minAmountOut,
-        sqrtPriceLimitX96: 0 // No price limit
-      };
-
-      console.log('🔄 Executing swap transaction...');
-
-      // Execute the swap - send ETH directly, it will be auto-wrapped
-      const tx = await routerContract.exactInputSingle(
-        params,
-        { 
-          value: amountInWei,
-          gasLimit: 500000 // Set a reasonable gas limit
-        }
-      );
-
-      console.log('⏳ Waiting for transaction confirmation...');
-      toast.info('Transaction submitted! Waiting for confirmation...');
-
-      const receipt = await tx.wait();
-
-      console.log('✅ Swap successful!', receipt.hash);
-      
-      setTxHash(receipt.hash);
-      setStatus('success');
-
-      toast.success(
-        <div>
-          <p className="font-bold">🎉 Swap Successful!</p>
-          <p className="text-sm">You received ~{estimatedBTribe} $BTRIBE!</p>
-        </div>,
-        { duration: 6000 }
-      );
-
-    } catch (err: any) {
-      console.error('❌ Swap error:', err);
-      
-      let userMessage = 'Transaction failed. Please try again.';
-      
-      // Handle specific error cases
-      if (err.code === 4001 || err.code === 'ACTION_REJECTED') {
-        userMessage = 'Transaction was rejected by user.';
-      } else if (err.message?.includes('insufficient funds')) {
-        userMessage = 'Insufficient ETH balance for this swap.';
-      } else if (err.message?.includes('INSUFFICIENT_OUTPUT_AMOUNT')) {
-        userMessage = 'Insufficient liquidity or high slippage. Try a smaller amount.';
-      } else if (err.message?.includes('execution reverted')) {
-        userMessage = 'Swap failed - try using the official ZORA platform to buy this creator coin.';
-      } else if (err.message) {
-        userMessage = err.message.slice(0, 100); // Truncate long error messages
-      }
-      
-      setErrorMessage(userMessage);
-      setStatus('error');
-      
-      toast.error(
-        <div>
-          <p className="font-bold">❌ Swap Failed</p>
-          <p className="text-sm">{userMessage}</p>
-        </div>,
-        { duration: 6000 }
-      );
-    }
-  };
-
-  const handleReset = () => {
-    setStatus('idle');
-    setErrorMessage(null);
-    setTxHash(null);
-  };
-
   return (
-    <Card className="bg-gradient-to-br from-[#7B2CBF] to-[#00D4FF] p-6 rounded-xl border-0 relative overflow-hidden">
-      {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#7B2CBF]/0 via-white/10 to-[#00D4FF]/0 animate-shimmer pointer-events-none" />
+    <Card className="bg-gradient-to-br from-[#001F3F] via-[#002855] to-[#001F3F] border-2 border-[#39FF14]/30 p-4 rounded-xl relative overflow-hidden shadow-lg shadow-[#39FF14]/20">
+      {/* Decorative neon green corner accents */}
+      <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-[#39FF14] opacity-20 rounded-tl-xl" />
+      <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-[#39FF14] opacity-20 rounded-tr-xl" />
+      <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-[#39FF14] opacity-20 rounded-bl-xl" />
+      <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-[#39FF14] opacity-20 rounded-br-xl" />
       
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-white font-bold text-lg mb-1">
-              Let's Pump Community Value! 🚀
-            </h3>
-            <p className="text-white/80 text-sm">
-              Buy $BTRIBE tokens with ETH on Base
-            </p>
-            {tokenPriceUSD > 0 && (
-              <p className="text-white/60 text-xs mt-1">
-                💰 ${tokenPriceUSD.toFixed(6)} USD per $BTRIBE
+        {/* Header */}
+        <div className="text-center mb-4">
+          <h3 className="text-white font-bold text-lg mb-1">
+            Let's Pump Community Value
+          </h3>
+          <p className="text-white/60 text-xs">
+            Buy $BTRIBE with ETH on Base
+          </p>
+          {priceUsd > 0 && (
+            <div className="inline-flex items-center gap-1.5 mt-2 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded-full px-3 py-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14] animate-pulse" />
+              <p className="text-[#39FF14] text-[10px] font-medium">
+                ${priceUsd.toFixed(6)} USD
               </p>
-            )}
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-            <ArrowDownUp className="w-6 h-6 text-white" />
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Swap Interface */}
-        <div className="space-y-3 mt-6">
+        <div className="space-y-2">
           {/* From (ETH) */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="bg-[#001F3F]/50 backdrop-blur-sm rounded-lg p-3 border border-[#7B2CBF]/30 hover:border-[#7B2CBF]/50 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/70 text-sm">From</span>
-              <span className="text-white text-sm font-medium">ETH</span>
+              <span className="text-white/60 text-xs">From</span>
+              <div className="flex items-center gap-1.5 bg-[#7B2CBF]/10 px-2 py-0.5 rounded border border-[#7B2CBF]/30">
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-[10px] font-bold">Ξ</span>
+                </div>
+                <span className="text-white text-xs font-bold">ETH</span>
+              </div>
             </div>
             <Input
               type="number"
@@ -383,170 +104,98 @@ export function BTribeSwap({ walletAddress, isConnected }: BTribeSwapProps) {
               min="0"
               step="0.0001"
               placeholder="0.01"
-              disabled={status === 'pending'}
-              className="bg-transparent border-0 text-white text-2xl font-bold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="bg-transparent border-0 text-white text-2xl font-bold p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-white/20"
             />
-            <p className="text-white/50 text-xs mt-1">Ethereum on Base</p>
+            <p className="text-white/40 text-[10px] mt-1">Base Network</p>
           </div>
 
-          {/* Arrow indicator */}
-          <div className="flex justify-center -my-2 relative z-10">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#39FF14] to-[#2ECC11] flex items-center justify-center shadow-lg">
-              <ArrowDownUp className="w-5 h-5 text-white" />
+          {/* Arrow indicator with glow */}
+          <div className="flex justify-center -my-1 relative z-10">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D4FF] to-[#0099CC] flex items-center justify-center shadow-md shadow-[#00D4FF]/50 animate-pulse border border-[#00D4FF]/30">
+              <ArrowDownUp className="w-4 h-4 text-white" />
             </div>
           </div>
 
           {/* To (BTRIBE) */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="bg-[#001F3F]/50 backdrop-blur-sm rounded-lg p-3 border border-[#39FF14]/30 hover:border-[#39FF14]/50 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white/70 text-sm">To (estimated)</span>
-              <span className="text-white text-sm font-medium">$BTRIBE</span>
+              <span className="text-white/60 text-xs">To (estimated)</span>
+              <div className="flex items-center gap-1.5 bg-[#39FF14]/10 px-2 py-0.5 rounded border border-[#39FF14]/30">
+                <div className="w-4 h-4 rounded-full bg-[#39FF14] flex items-center justify-center">
+                  <span className="text-[#001F3F] text-[10px] font-bold">B</span>
+                </div>
+                <span className="text-[#39FF14] text-xs font-bold">$BTRIBE</span>
+              </div>
             </div>
             <div className="text-white text-2xl font-bold flex items-center gap-2">
-              {isLoadingQuote ? (
+              {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-white/50">Loading...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#00D4FF]" />
+                  <span className="text-white/50 text-lg">Loading...</span>
                 </>
               ) : (
-                `~${estimatedBTribe}`
+                <>
+                  <span className="text-[#39FF14]">~</span>
+                  {estimatedBTribe}
+                </>
               )}
             </div>
-            <p className="text-white/50 text-xs mt-1">ZORA Creator Coin</p>
           </div>
 
-          {/* Status Messages */}
-          {!hasLiquidity && status === 'idle' && (
-            <div className="bg-yellow-500/20 backdrop-blur-sm border border-yellow-500 rounded-xl p-4">
-              <div className="flex items-start gap-2">
-                <Info className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-yellow-400 text-sm font-medium mb-1">Unable to Load Price</p>
-                  <p className="text-yellow-300 text-xs">
-                    Try buying on ZORA or Uniswap directly:
-                  </p>
-                  <ul className="text-yellow-300 text-xs mt-1 ml-4 list-disc">
-                    <li>
-                      <a 
-                        href={`https://zora.co/collect/base:${BTRIBE_TOKEN_ADDRESS}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="underline hover:text-white"
-                      >
-                        Buy on ZORA
-                      </a>
-                    </li>
-                    <li>
-                      <a 
-                        href={`https://app.uniswap.org/swap?outputCurrency=${BTRIBE_TOKEN_ADDRESS}&chain=base`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="underline hover:text-white"
-                      >
-                        Buy on Uniswap
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {status === 'success' && txHash && (
-            <div className="bg-[#39FF14]/20 backdrop-blur-sm border border-[#39FF14] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-5 h-5 text-[#39FF14]" />
-                <span className="text-white font-medium">Swap Successful! 🎉</span>
-              </div>
-              <a
-                href={`https://basescan.org/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#39FF14] text-sm hover:underline flex items-center gap-1"
-              >
-                View on BaseScan <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          )}
-
-          {status === 'error' && errorMessage && (
-            <div className="bg-red-500/20 backdrop-blur-sm border border-red-500 rounded-xl p-4">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-red-400 text-sm">{errorMessage}</p>
-              </div>
-            </div>
-          )}
-
           {/* Swap Button */}
-          <Button
-            onClick={status === 'idle' || status === 'pending' ? handleSwap : handleReset}
-            disabled={status === 'pending' || !isConnected || isLoadingQuote}
-            className="w-full bg-white hover:bg-white/90 text-[#7B2CBF] font-bold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#7B2CBF]/10 to-transparent animate-shimmer pointer-events-none" />
-            
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              {status === 'pending' ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing Swap...
-                </>
-              ) : status === 'success' ? (
-                'Swap Another'
-              ) : !isConnected ? (
-                'Connect Wallet First'
-              ) : isLoadingQuote ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Loading Price...
-                </>
-              ) : !hasLiquidity ? (
-                <>
-                  <ExternalLink className="w-5 h-5" />
-                  Buy on Uniswap
-                </>
-              ) : (
-                <>
-                  <ArrowDownUp className="w-5 h-5" />
-                  Swap Now
-                </>
-              )}
-            </span>
-          </Button>
+          <UniswapSwapButton 
+            amountEth={amountEth} 
+            onSuccess={() => {
+              console.log('✅ Swap completed successfully!');
+              // Optionally reset amount
+              // setAmountEth('0.01');
+            }} 
+          />
 
-          {/* Info */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 mt-2">
-            <div className="space-y-1 text-xs text-white/60">
-              <div className="flex justify-between">
-                <span>Token Type:</span>
-                <span className="text-white/80">ZORA Creator Coin</span>
+          {/* Info Section */}
+          <div className="bg-[#001F3F]/30 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+            <div className="space-y-1.5 text-[10px]">
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-white/60">Token Type</span>
+                <span className="text-white">ZORA Creator Coin</span>
               </div>
-              <div className="flex justify-between">
-                <span>Contract:</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-white/60">Contract</span>
                 <a 
-                  href={`https://basescan.org/token/${BTRIBE_TOKEN_ADDRESS}`}
+                  href={`https://basescan.org/token/${BTRIBE_ADDRESS}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/80 font-mono hover:text-white transition-colors"
+                  className="text-[#39FF14] font-mono hover:text-[#39FF14]/80 transition-colors flex items-center gap-1"
                 >
-                  {BTRIBE_TOKEN_ADDRESS.slice(0, 6)}...{BTRIBE_TOKEN_ADDRESS.slice(-4)}
+                  {BTRIBE_ADDRESS.slice(0, 6)}...{BTRIBE_ADDRESS.slice(-4)}
+                  <ExternalLink className="w-2.5 h-2.5" />
                 </a>
               </div>
-              <div className="flex justify-between">
-                <span>Network:</span>
-                <span className="text-white/80">Base Mainnet</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-white/60">Network</span>
+                <span className="text-white">Base Mainnet</span>
               </div>
-              <div className="flex justify-between">
-                <span>Max Slippage:</span>
-                <span className="text-white/80">5%</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-white/60">DEX</span>
+                <span className="text-white">Uniswap V3</span>
               </div>
-              <div className="flex justify-between">
-                <span>Powered By:</span>
-                <span className="text-white/80">ZORA + Uniswap</span>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-white/60">Powered By</span>
+                <span className="text-[#39FF14]">ZORA + Uniswap</span>
               </div>
             </div>
+          </div>
+
+          {/* Footer Link */}
+          <div className="text-center pt-2">
+            <a 
+              href={`https://dexscreener.com/base/${BTRIBE_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/40 hover:text-white/70 flex items-center justify-center gap-1 transition-colors"
+            >
+              View Chart on DexScreener <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </div>

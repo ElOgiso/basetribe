@@ -7,7 +7,7 @@ import { fetchNFTMetadata, NFT_CONFIG } from '../lib/nft';
 import { MINT_PRICES, MINT_PRICE_BREAKDOWN } from '../lib/nftMinting';
 import type { NFTMetadata } from '../lib/nft';
 import bannerImage from '../assets/nftmint.png';
-import { ManifoldMintButton } from './ManifoldMintButton';
+import { NFTMintButtons } from './NFTMintButtons';
 
 interface ManifoldNFTClaimProps {
   isConnected: boolean;
@@ -356,28 +356,12 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
         </div>
       )}
 
-      {/* NEW MINT BUTTONS SECTION */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto">
-            {/* Founder Button */}
-            <ManifoldMintButton 
-              instanceId={4117309680n}
-              priceEth="0.00617"
-              badgeName="Founder"
-              badgeColor="purple"
-              isConnected={isConnected}     
-              userAddress={walletAddress}   
-            />
-            
-            {/* Believer Button */}
-            <ManifoldMintButton 
-              instanceId={4117350640n}
-              priceEth="0.00118"
-              badgeName="Believer"
-              badgeColor="cyan"
-              isConnected={isConnected}     
-              userAddress={walletAddress}   
-            />
-          </div>
+      {/* Standalone Mint Buttons Component */}
+      <NFTMintButtons 
+        walletAddress={walletAddress}
+        userFid={userFid}
+        isConnected={isConnected}
+      />
 
       {/* Info Footer - Coinbase/Binance style */}
       <Card className="bg-gradient-to-r from-[#39FF14]/10 via-[#39FF14]/5 to-[#39FF14]/10 border-2 border-[#39FF14]/30 p-5 rounded-xl max-w-5xl mx-auto backdrop-blur-sm">

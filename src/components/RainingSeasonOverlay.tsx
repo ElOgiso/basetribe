@@ -95,10 +95,11 @@ export function RainingSeasonOverlay({ isConnected, userFid, onClaimSuccess }: R
     // Check immediately on mount
     checkRainStatus();
 
+    // ⚠️ DISABLED: Polling disabled to prevent API spam since feature is not yet deployed
     // Poll every 10 seconds
-    const interval = setInterval(checkRainStatus, 10000);
+    // const interval = setInterval(checkRainStatus, 10000);
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, [isConnected, userFid]);
 
   // Handle claim action

@@ -4,10 +4,9 @@
 import './styles/globals.css';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
-import { OnchainKitProvider } from '@coinbase/onchainkit'; 
-import { base } from 'wagmi/chains';
-import { WagmiProvider, createConfig, http } from 'wagmi';
+import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { wagmiConfig } from './lib/wagmi-config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
@@ -43,6 +42,7 @@ import { connectWallet, getAccounts } from './lib/wallet';
 import { copyToClipboard } from './lib/clipboard';
 import { fetchFidFromWallet, getClaimableBalance, claimTokens, claimJesseTokens, claimUSDC } from './lib/claiming';
 import type { UserData, LeaderboardEntry } from './lib/types';
+import { getSessionState } from './lib/session';
 import tribeLogo from './assets/logo.png';
 import qrCodeImage from './assets/qrcode.png';
 import donationBackground from './assets/qrbackground.png';
@@ -72,26 +72,10 @@ import { WelcomeBanner } from './components/WelcomeBanner';
 import { RainingSeasonOverlay } from './components/RainingSeasonOverlay';
 import { ActivityFeed } from './components/ActivityFeed';
 
-const config = createConfig({
-  chains: [base],
-  transports: {
-    [base.id]: http(),
-  },
-});
-
+// Create QueryClient outside component to avoid recreating on each render
 const queryClient = new QueryClient();
-export default function App() {
-  // ✅ SDK READY SIGNAL
-  useEffect(() => {
-    const load = async () => {
-      try {
-        await sdk.actions.ready();
-      } catch (err) {
-        console.error("SDK Ready Error:", err);
-      }
-    };
-    load();
-  }, []);
+
+function AppContent() {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
@@ -107,6 +91,7 @@ export default function App() {
   const [userFid, setUserFid] = useState<string | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [isSessionOpen, setIsSessionOpen] = useState(false);
 
   // ✅ SDK READY SIGNAL - Dynamically load Farcaster Frame SDK
   useEffect(() => {
@@ -122,18 +107,6 @@ export default function App() {
       }
     };
     load();
-  }, []);
-
-  // Clear any stuck intervals on mount (fixes restored version issues)
-  useEffect(() => {
-    // Get the highest interval ID
-    const intervalId = setInterval(() => {}, 9999999);
-    // Clear all intervals up to that ID
-    for (let i = 1; i < intervalId; i++) {
-      clearInterval(i);
-    }
-    clearInterval(intervalId);
-    console.log('🧹 Cleared any stuck intervals from previous version');
   }, []);
 
   // Check for existing connection on mount
@@ -612,16 +585,26 @@ export default function App() {
     }
   }, [notification]);
 
- return (
-  <WagmiProvider config={config}>
-    <QueryClientProvider client={queryClient}>
-      <OnchainKitProvider 
-        apiKey={import.meta.env.VITE_CDP_API_KEY} 
-        chain={base}
-      >
-      <div className="min-h-screen bg-gradient-to-b from-[#001F3F] via-[#002855] to-[#001F3F] overflow-x-hidden">
-        {/* Welcome Banner - Shows on first visit */}
-        <WelcomeBanner
+  // Check session state every 5 seconds to update Feed tab glow
+  useEffect(() => {
+    const checkSession = () => {
+      const sessionState = getSessionState();
+      setIsSessionOpen(sessionState.isActive);
+    };
+
+    // Check immediately
+    checkSession();
+
+    // Check every 5 seconds
+    const interval = setInterval(checkSession, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#001F3F] via-[#002855] to-[#001F3F] overflow-x-hidden">
+      {/* Welcome Banner - Shows on first visit */}
+      <WelcomeBanner
         userData={userData}
         isVisible={showWelcomeBanner}
         onClose={() => {
@@ -635,27 +618,27 @@ export default function App() {
         {/* Token Scroller */}
         <TokenScroller />
 
-        {/* Header with Session Notification Banner - Both sticky */}
-        <div className="sticky top-0 z-50">
+        {/* Header with Session Notification Banner - ALWAYS STICKY AT TOP */}
+        <div className="sticky top-0 z-[100] shadow-lg">
           {/* Header */}
-          <div className="bg-[#001F3F]/80 backdrop-blur-md border-b border-white/10">
-            <div className="px-4 py-4">
+          <div className="bg-[#001F3F]/95 backdrop-blur-md border-b border-white/10">
+            <div className="px-4 py-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <img 
                     src={tribeLogo} 
-                    alt="BaseTribe" 
-                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    alt="BaseTribe Logo" 
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover flex-shrink-0 ring-2 ring-[#39FF14]/30"
                   />
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-white font-bold text-base sm:text-lg truncate">We Are a Tribe Community</h1>
-                    <p className="text-white/60 text-xs">Built on Base</p>
+                  <div className="min-w-0">
+                    <h1 className="text-white font-bold text-sm sm:text-base truncate">Community</h1>
+                    <p className="text-white/60 text-[10px] sm:text-xs">Built on Base</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {/* BETA Badge - Always visible */}
                   <div className="bg-[#001F3F] border border-[#00D4FF] rounded px-2 py-1">
-                    <span className="text-white font-bold text-xs tracking-wider">BETA</span>
+                    <span className="text-white font-bold text-[10px] sm:text-xs tracking-wider">BETA</span>
                   </div>
                   
                   {isConnected ? (
@@ -666,7 +649,7 @@ export default function App() {
                             <img 
                               src={profileData.pfpUrl} 
                               alt="Profile" 
-                              className="w-6 h-6 rounded-full flex-shrink-0"
+                              className="w-8 h-8 rounded-full flex-shrink-0"
                             />
                           )}
                           <span className="text-white text-xs hidden sm:inline truncate max-w-[80px]">{profileData.displayName}</span>
@@ -684,7 +667,7 @@ export default function App() {
                   ) : (
                     <Button
                       onClick={handleConnect}
-                      className="bg-[#39FF14] hover:bg-[#2ECC11] text-[#001F3F] font-bold rounded-xl text-sm px-3 py-2"
+                      className="bg-[#39FF14] hover:bg-[#2ECC11] text-[#001F3F] font-bold rounded-xl text-xs sm:text-sm px-2 py-2 sm:px-3"
                     >
                       <Wallet className="w-4 h-4 mr-1" />
                       Connect
@@ -695,7 +678,7 @@ export default function App() {
             </div>
           </div>
           
-          {/* Session Notification Banner - Always visible with header */}
+          {/* Session Notification Banner - ALWAYS VISIBLE WITH HEADER */}
           <SessionNotificationBanner />
         </div>
 
@@ -713,10 +696,17 @@ export default function App() {
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#7B2CBF] data-[state=active]:to-[#00D4FF] data-[state=active]:text-white rounded-lg"
+                className={`data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#7B2CBF] data-[state=active]:to-[#00D4FF] data-[state=active]:text-white rounded-lg relative transition-all ${
+                  isSessionOpen 
+                    ? 'animate-pulse shadow-[0_0_20px_rgba(57,255,20,0.6)] ring-2 ring-[#39FF14]/50 bg-[#39FF14]/10' 
+                    : ''
+                }`}
               >
                 <Activity className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Feed</span>
+                {isSessionOpen && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#39FF14] rounded-full animate-ping" />
+                )}
               </TabsTrigger>
               <TabsTrigger
                 value="leaderboard"
@@ -971,69 +961,127 @@ export default function App() {
                     </Button>
                   </Card>
 
-                  <Card className="bg-[#001F3F]/50 p-6 rounded-xl border border-white/10">
-                    <h3 className="text-white font-bold mb-4">Your Stats</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">Stars</span>
-                        <span className="text-white font-bold">{userData.stars} ⭐</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">Defaults</span>
-                        <span className="text-white font-bold">{userData.defaults} ⚠️</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">Session Streak</span>
-                        <span className="text-white font-bold">{userData.session_streak} 🔥</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">Invites</span>
-                        <span className="text-[#00D4FF] font-bold">{userData.invites_count} 👥</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">$BTRIBE Balance</span>
-                        <span className="text-[#39FF14] font-bold">{userData.btribe_balance.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">$JESSE Balance</span>
-                        <span className="text-[#FFD700] font-bold">{userData.jesse_balance.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">USDC Balance</span>
-                        <span className="text-[#2775CA] font-bold">{userData.usdc_claims.toLocaleString()} 💵</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60">Booster Balance</span>
-                        <span className="text-[#7B2CBF] font-bold">{userData.booster.toLocaleString()} 🚀</span>
-                      </div>
-                      {userData.followers > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/60">Followers</span>
-                          <span className="text-white font-bold">{userData.followers.toLocaleString()}</span>
+                  <Card className="bg-black border-2 border-[#FFD700]/40 rounded-2xl overflow-hidden shadow-2xl shadow-[#FFD700]/20">
+                    <div className="bg-gradient-to-r from-[#FFD700]/20 via-[#FFD700]/10 to-transparent px-6 py-4 border-b border-[#FFD700]/20">
+                      <h3 className="text-white font-bold text-xl tracking-tight">My Stats</h3>
+                      <p className="text-white/50 text-xs mt-0.5">Your performance metrics</p>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                      <div>
+                        <p className="text-[#FFD700] font-semibold text-xs tracking-widest uppercase mb-3">Performance</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-gradient-to-br from-[#FFD700]/10 to-transparent border border-[#FFD700]/20 rounded-xl p-4 hover:border-[#FFD700]/40 transition-all group">
+                            <p className="text-white/60 text-xs mb-2">Stars</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-white font-bold text-2xl">{userData.stars}</span>
+                              <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 flex items-center justify-center group-hover:bg-[#FFD700]/30 transition-all">
+                                <div className="w-2 h-2 bg-[#FFD700] rounded-full animate-pulse" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-xl p-4 hover:border-orange-500/40 transition-all group">
+                            <p className="text-white/60 text-xs mb-2">Streak</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-white font-bold text-2xl">{userData.session_streak}</span>
+                              <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-all">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 rounded-xl p-4 hover:border-red-500/40 transition-all group">
+                            <p className="text-white/60 text-xs mb-2">Defaults</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-white font-bold text-2xl">{userData.defaults}</span>
+                              <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center group-hover:bg-red-500/30 transition-all">
+                                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-br from-[#00D4FF]/10 to-transparent border border-[#00D4FF]/20 rounded-xl p-4 hover:border-[#00D4FF]/40 transition-all group">
+                            <p className="text-white/60 text-xs mb-2">Invites</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-white font-bold text-2xl">{userData.invites_count}</span>
+                              <div className="w-6 h-6 rounded-full bg-[#00D4FF]/20 flex items-center justify-center group-hover:bg-[#00D4FF]/30 transition-all">
+                                <div className="w-2 h-2 bg-[#00D4FF] rounded-full animate-pulse" />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {userData.probation_count > 0 && (
-                        <div className="flex justify-between items-center border-t border-red-500/30 pt-3 mt-3">
-                          <span className="text-red-400">Probation Count</span>
-                          <span className="text-red-400 font-bold">{userData.probation_count} ⚠️</span>
+                      </div>
+
+                      <div>
+                        <p className="text-[#FFD700] font-semibold text-xs tracking-widest uppercase mb-3">Token Holdings</p>
+                        
+                        <div className="bg-gradient-to-br from-[#001F3F] via-[#002855] to-[#001F3F] border-2 border-white/10 rounded-2xl p-5 shadow-xl">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-gradient-to-br from-[#39FF14]/10 via-[#39FF14]/5 to-transparent border border-[#39FF14]/30 rounded-xl p-4 hover:border-[#39FF14]/50 hover:shadow-lg hover:shadow-[#39FF14]/20 transition-all">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-white/60 text-[10px] font-medium uppercase tracking-wide">$BTRIBE</span>
+                                <div className="w-6 h-6 rounded-full bg-[#39FF14]/20 flex items-center justify-center">
+                                  <span className="text-[#39FF14] text-xs font-bold">B</span>
+                                </div>
+                              </div>
+                              <p className="text-[#39FF14] font-bold text-2xl leading-none">{userData.btribe_balance.toLocaleString()}</p>
+                              <p className="text-[#39FF14]/40 text-[10px] mt-1">Balance</p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-[#FFD700]/10 via-[#FFD700]/5 to-transparent border border-[#FFD700]/30 rounded-xl p-4 hover:border-[#FFD700]/50 hover:shadow-lg hover:shadow-[#FFD700]/20 transition-all">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-white/60 text-[10px] font-medium uppercase tracking-wide">$JESSE</span>
+                                <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
+                                  <span className="text-[#FFD700] text-xs font-bold">J</span>
+                                </div>
+                              </div>
+                              <p className="text-[#FFD700] font-bold text-2xl leading-none">{userData.jesse_balance.toLocaleString()}</p>
+                              <p className="text-[#FFD700]/40 text-[10px] mt-1">Balance</p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-[#2775CA]/10 via-[#2775CA]/5 to-transparent border border-[#2775CA]/30 rounded-xl p-4 hover:border-[#2775CA]/50 hover:shadow-lg hover:shadow-[#2775CA]/20 transition-all">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-white/60 text-[10px] font-medium uppercase tracking-wide">USDC</span>
+                                <div className="w-6 h-6 rounded-full bg-[#2775CA]/20 flex items-center justify-center">
+                                  <span className="text-[#2775CA] text-xs font-bold">$</span>
+                                </div>
+                              </div>
+                              <p className="text-[#2775CA] font-bold text-2xl leading-none">{userData.usdc_claims.toLocaleString()}</p>
+                              <p className="text-[#2775CA]/40 text-[10px] mt-1">Balance</p>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-[#7B2CBF]/10 via-[#7B2CBF]/5 to-transparent border border-[#7B2CBF]/30 rounded-xl p-4 hover:border-[#7B2CBF]/50 hover:shadow-lg hover:shadow-[#7B2CBF]/20 transition-all">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-white/60 text-[10px] font-medium uppercase tracking-wide">BOOSTER</span>
+                                <div className="w-6 h-6 rounded-full bg-[#7B2CBF]/20 flex items-center justify-center">
+                                  <div className="w-2.5 h-2.5 bg-[#7B2CBF] rounded-full animate-pulse" />
+                                </div>
+                              </div>
+                              <p className="text-[#7B2CBF] font-bold text-2xl leading-none">{userData.booster.toLocaleString()}</p>
+                              <p className="text-[#7B2CBF]/40 text-[10px] mt-1">Balance</p>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                      {userData.fail_count > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-orange-400">Fail Count</span>
-                          <span className="text-orange-400 font-bold">{userData.fail_count}</span>
-                        </div>
-                      )}
-                      {userData.premium && (
-                        <div className="flex justify-between items-center border-t border-yellow-500/30 pt-3 mt-3">
-                          <span className="text-yellow-400">Premium Status</span>
-                          <span className="text-yellow-400 font-bold">✨ VIP</span>
-                        </div>
-                      )}
-                      {userData.membership_nft && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-purple-400">NFT Membership</span>
-                          <span className="text-purple-400 font-bold text-xs">{userData.membership_nft}</span>
+                      </div>
+
+                      {(userData.followers > 0 || userData.probation_count > 0) && (
+                        <div>
+                          <p className="text-[#FFD700] font-semibold text-xs tracking-widest uppercase mb-3">Additional</p>
+                          <div className="space-y-2">
+                            {userData.followers > 0 && (
+                              <div className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3 border border-white/10">
+                                <span className="text-white/60 text-sm">Followers</span>
+                                <span className="text-white font-bold">{userData.followers.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {userData.probation_count > 0 && (
+                              <div className="flex items-center justify-between bg-red-500/10 rounded-lg px-4 py-3 border border-red-500/30">
+                                <span className="text-red-400 text-sm">Probation Count</span>
+                                <span className="text-red-400 font-bold">{userData.probation_count}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1161,16 +1209,25 @@ export default function App() {
           </div>
 
           {/* Footer Credits */}
-                <div className="pb-8 text-center">
-                  <p className="text-white/40 text-sm">
-                    Built on Base by Base Tribe.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="pb-8 text-center">
+            <p className="text-white/40 text-sm">
+              Built on Base by Base Tribe 🔵
+            </p>
           </div>
-        </OnchainKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </div>
+      </div>
+      
+
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WagmiProvider config={wagmiConfig}>
+        <AppContent />
+      </WagmiProvider>
+    </QueryClientProvider>
   );
 }

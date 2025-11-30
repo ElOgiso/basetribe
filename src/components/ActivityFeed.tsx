@@ -32,12 +32,12 @@ export function ActivityFeed({ userFid, limit = 50, userData, onRefresh }: Activ
     loadFeedData();
   }, [limit]);
 
-  // Auto-refresh feed every 30 seconds to show new posts
+  // Auto-refresh feed every 2 minutes to show new posts (reduced from 30s to prevent API spam)
   useEffect(() => {
     const refreshInterval = setInterval(() => {
       console.log('🔄 Auto-refreshing activity feed...');
       loadFeedData();
-    }, 30000); // 30 seconds
+    }, 120000); // 2 minutes
 
     return () => clearInterval(refreshInterval);
   }, [limit]);
@@ -54,7 +54,7 @@ export function ActivityFeed({ userFid, limit = 50, userData, onRefresh }: Activ
     };
 
     updateSession();
-    const interval = setInterval(updateSession, 1000);
+    const interval = setInterval(updateSession, 10000); // Update every 10 seconds instead of 1
     return () => clearInterval(interval);
   }, [userData]);
 

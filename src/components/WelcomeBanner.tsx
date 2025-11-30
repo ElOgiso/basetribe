@@ -28,11 +28,10 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
   const captureImage = async (): Promise<Blob | null> => {
     if (!bannerRef.current) return null;
 
-    try {
-      setIsProcessing(true);
+    const buttons = bannerRef.current.querySelectorAll('.hide-on-capture');
 
+    try {
       // Hide buttons before capture
-      const buttons = bannerRef.current.querySelectorAll('.hide-on-capture');
       buttons.forEach(btn => (btn as HTMLElement).style.display = 'none');
 
       // Import html2canvas dynamically
@@ -46,38 +45,32 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
         useCORS: true,
       });
 
-      // Show buttons again
-      buttons.forEach(btn => (btn as HTMLElement).style.display = '');
-      setIsProcessing(false);
-
       // Convert canvas to blob
-      return new Promise((resolve) => {
+      const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob((blob) => {
           resolve(blob);
         }, 'image/png');
       });
+
+      return blob;
     } catch (error) {
       console.error('Failed to capture image:', error);
-      
-      // Always restore buttons even on error
-      const buttons = bannerRef.current?.querySelectorAll('.hide-on-capture');
-      buttons?.forEach(btn => (btn as HTMLElement).style.display = '');
-      setIsProcessing(false);
-      
       alert('Failed to capture image. Please try again.');
       return null;
+    } finally {
+      // ALWAYS restore buttons, even on error
+      buttons.forEach(btn => (btn as HTMLElement).style.display = '');
     }
   };
 
   const handleShare = async () => {
+    setIsProcessing(true);
+    
     try {
-      setIsProcessing(true);
-      
       // Capture the banner as an image
       const blob = await captureImage();
       
       if (!blob) {
-        setIsProcessing(false);
         return;
       }
 
@@ -96,7 +89,6 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
             text: shareText,
             url: window.location.origin,
           });
-          setIsProcessing(false);
         } catch (err: any) {
           // User cancelled or share failed
           if (err.name !== 'AbortError') {
@@ -104,7 +96,6 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
             // Fallback to download
             downloadBlob(blob, `basetribe-${userData?.farcaster_username || 'member'}.png`);
           }
-          setIsProcessing(false);
         }
       } else {
         // Fallback: Download the image instead
@@ -117,31 +108,28 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
         } catch {
           alert('Image downloaded successfully!');
         }
-        setIsProcessing(false);
       }
     } catch (error) {
       console.error('Share failed:', error);
       alert('Failed to share. Please try again.');
+    } finally {
       setIsProcessing(false);
     }
   };
 
   const handleDownload = async () => {
+    setIsProcessing(true);
+    
     try {
-      setIsProcessing(true);
-
       // Capture the banner as an image
       const blob = await captureImage();
       
       if (!blob) {
-        setIsProcessing(false);
         return;
       }
 
       // Download the image
       downloadBlob(blob, `basetribe-${userData?.farcaster_username || 'member'}.png`);
-      
-      setIsProcessing(false);
       
       // Show success feedback
       setTimeout(() => {
@@ -150,6 +138,7 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
     } catch (error) {
       console.error('Download failed:', error);
       alert('Failed to download. Please try again.');
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -199,7 +188,8 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
         {/* Close button - smaller on mobile */}
         <button
           onClick={onClose}
-          className="hide-on-capture absolute -top-2 -right-2 sm:-top-4 sm:-right-4 z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg hover:scale-110 transition-transform touch-manipulation"
+          disabled={isProcessing}
+          className="hide-on-capture absolute -top-2 -right-2 sm:-top-4 sm:-right-4 z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg hover:scale-110 transition-transform touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </button>
@@ -219,8 +209,8 @@ export function WelcomeBanner({ userData, isVisible, onClose }: WelcomeBannerPro
             <div className="flex items-center justify-center mb-3 sm:mb-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-[#39FF14]/30 blur-lg rounded-full animate-pulse" />
-               <img 
-                 src={baseTribeLogo}
+                <img 
+                  src={baseTribeLogo} 
                   alt="BaseTribe" 
                   className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 border-[#39FF14] shadow-lg"
                 />

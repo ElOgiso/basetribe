@@ -33,15 +33,28 @@ export function MiniAppNotifications() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    let isSubscribed = true;
+    
     // Check if SDK is loaded
     const checkSDK = () => {
-      if (window.sdk?.actions?.addMiniApp) {
+      if (window.sdk?.actions?.addMiniApp && isSubscribed) {
         setIsSDKLoaded(true);
+        // Clear interval once SDK is loaded
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+          console.log('✅ MiniApp SDK loaded - stopped polling');
+        }
       }
     };
 
     checkSDK();
-    const interval = setInterval(checkSDK, 1000);
+    
+    // Only set interval if SDK not already loaded
+    if (!window.sdk?.actions?.addMiniApp) {
+      interval = setInterval(checkSDK, 1000);
+    }
     
     // Check localStorage for notification status
     const notifStatus = localStorage.getItem('basetribe_notifications_enabled');
@@ -54,7 +67,12 @@ export function MiniAppNotifications() {
       setAddedToApp(true);
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, []);
 
   const handleAddMiniApp = async () => {
