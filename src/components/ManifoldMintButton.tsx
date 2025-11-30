@@ -14,22 +14,19 @@ interface Props {
   badgeName: string;
   badgeColor: 'purple' | 'cyan';
   userFid?: string | null;
-  // Added these props to sync with parent App state
-  walletAddress?: string | null;
-  isConnected?: boolean;
+  walletAddress?: string | null; // Added
+  isConnected?: boolean;         // Added
 }
 
 export function ManifoldMintButton({ 
-  instanceId, 
-  priceEth, 
-  badgeName, 
-  badgeColor, 
-  userFid,
-  walletAddress, // Receive from parent
-  isConnected: isAppConnected // Receive from parent
+  instanceId, priceEth, badgeName, badgeColor, userFid, 
+  walletAddress, isConnected: isAppConnected 
 }: Props) {
-  // Use wagmi for the actual contract write, but allow UI to use parent state
   const { isConnected: isWagmiConnected, address: wagmiAddress } = useAccount();
+  
+  // Use parent state if available, otherwise fallback to wagmi
+  const isConnected = isAppConnected ?? isWagmiConnected;
+  const address = walletAddress || wagmiAddress;
   const { writeContract, data: hash, isPending, isSuccess: isWriteSuccess } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -38,12 +35,8 @@ export function ManifoldMintButton({
   const [minted, setMinted] = useState(false);
   const [updatingSheets, setUpdatingSheets] = useState(false);
 
-  // Determine effective connection state (trust App state if provided, otherwise wagmi)
-  const isEffectiveConnected = isAppConnected ?? isWagmiConnected;
-  const effectiveAddress = walletAddress || wagmiAddress;
-
   const mint = () => {
-    if (!effectiveAddress) return;
+    if (!address) return;
 
     writeContract({
       address: '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE', // Manifold Claim Contract
@@ -66,7 +59,7 @@ export function ManifoldMintButton({
         instanceId,
         0,
         [],
-        effectiveAddress // Use the effective address
+        address
       ],
       value: parseEther(priceEth),
       chainId: base.id,
@@ -75,7 +68,7 @@ export function ManifoldMintButton({
 
   // Update Google Sheets when transaction is confirmed
   useEffect(() => {
-    if (isConfirmed && hash && !minted && effectiveAddress) {
+    if (isConfirmed && hash && !minted && address) {
       const updateSheets = async () => {
         setUpdatingSheets(true);
         try {
@@ -83,7 +76,7 @@ export function ManifoldMintButton({
           let fid = userFid;
           if (!fid) {
             console.log('No FID provided, fetching from wallet...');
-            fid = await fetchFidFromWallet(effectiveAddress);
+            fid = await fetchFidFromWallet(address);
           }
           
           if (fid) {
@@ -92,7 +85,7 @@ export function ManifoldMintButton({
             
             const updated = await updateMembershipNFT(
               fid,
-              effectiveAddress,
+              address,
               hash,
               nftType
             );
@@ -115,9 +108,9 @@ export function ManifoldMintButton({
       
       updateSheets();
     }
-  }, [isConfirmed, hash, minted, effectiveAddress, badgeName, userFid]);
+  }, [isConfirmed, hash, minted, address, badgeName, userFid]);
 
-  if (!isEffectiveConnected) {
+  if (!isConnected) {
     return (
       <Button disabled className="w-full py-6 rounded-xl bg-[#001F3F]/50 border border-white/10 text-white/50">
         Connect Wallet to Mint
