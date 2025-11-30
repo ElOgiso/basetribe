@@ -111,18 +111,29 @@ export function isFullMember(userData: any): boolean {
  * Check if user can post (is full member AND session is active)
  */
 export function canUserPost(userData: any): { canPost: boolean; reason?: string } {
+  console.log('🔍 Checking if user can post:', { userData });
+  
   if (!userData) {
+    console.log('❌ Cannot post: Not connected');
     return { canPost: false, reason: 'Not connected' };
   }
 
+  const status = (userData.status || '').toLowerCase();
+  console.log('👤 User status:', status);
+  
   if (!isFullMember(userData)) {
+    console.log('❌ Cannot post: Full member status required. Current status:', userData.status);
     return { canPost: false, reason: 'Full member status required' };
   }
 
   const sessionState = getSessionState();
+  console.log('⏰ Session state:', sessionState);
+  
   if (!sessionState.isActive) {
+    console.log('❌ Cannot post: No active session');
     return { canPost: false, reason: 'No active session' };
   }
 
+  console.log('✅ User can post!');
   return { canPost: true };
 }
