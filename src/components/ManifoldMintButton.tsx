@@ -1,16 +1,16 @@
 // src/components/ManifoldMintButton.tsx
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Loader2, Sparkles, CheckCircle2, Shield } from 'lucide-react';
+import { Loader2, Sparkles, CheckCircle2, Shield, AlertCircle } from 'lucide-react';
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
+import { base } from 'wagmi/chains'; // Import Base chain
 
 interface Props {
   instanceId: bigint;
   priceEth: string;
   badgeName: string;
   badgeColor: 'purple' | 'cyan';
-  // New props to force visibility from parent
   isConnected: boolean;
   userAddress: string | null;
 }
@@ -24,19 +24,30 @@ export function ManifoldMintButton({
   priceEth, 
   badgeName, 
   badgeColor,
-  isConnected,   // Receive from parent
-  userAddress    // Receive from parent
+  isConnected,
+  userAddress
 }: Props) {
   
-  // Wagmi hooks for writing to contract
-  const { data: hash, writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { 
+    data: hash, 
+    writeContract, 
+    isPending: isWritePending, 
+    error: writeError 
+  } = useWriteContract();
   
-  // Wagmi hook to wait for transaction confirmation
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { 
+    isLoading: isConfirming, 
+    isSuccess: isConfirmed 
+  } = useWaitForTransactionReceipt({ hash });
 
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Debugging: Log errors to console so you can see them (F12)
+  useEffect(() => {
+    if (writeError) {
+      console.error("Mint Error Details:", writeError);
+    }
+  }, [writeError]);
 
   useEffect(() => {
     if (isConfirmed) {
@@ -49,6 +60,8 @@ export function ManifoldMintButton({
   const mint = () => {
     if (!userAddress) return;
 
+    // 1. Force switch to Base Network by passing chainId
+    // 2. Use the exact ABI Manifold expects
     writeContract({
       address: MANIFOLD_CLAIM_CONTRACT, 
       abi: [{
@@ -70,15 +83,15 @@ export function ManifoldMintButton({
         instanceId,
         0,  // mintIndex
         [], // merkleProof
-        userAddress // Use the address passed from parent
+        userAddress
       ],
       value: parseEther(priceEth),
+      chainId: base.id, // <--- CRITICAL FIX: Force Base Chain
     });
   };
 
   const isProcessing = isWritePending || isConfirming;
 
-  // IMPORTANT: We trust the parent's isConnected state now
   if (!isConnected) {
     return (
         <Button disabled className="w-full py-4 sm:py-6 rounded-xl bg-[#001F3F]/50 border border-white/10 text-white/50">
@@ -108,7 +121,6 @@ export function ManifoldMintButton({
             : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:opacity-90 text-white shadow-[#00D4FF]/20'
         }`}
       >
-        {/* Shimmer effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         
         {isProcessing ? (
@@ -124,12 +136,18 @@ export function ManifoldMintButton({
         )}
       </Button>
       
+      {/* IMPROVED ERROR DISPLAY */}
       {writeError && (
-        <p className="text-center text-red-400 text-xs bg-red-500/10 p-2 rounded">
-          {writeError.message.includes('Connector not found') 
-            ? 'Please try refreshing or reconnecting wallet' 
-            : 'Transaction failed or rejected'}
-        </p>
+        <div className="flex items-center justify-center gap-2 text-red-400 text-xs bg-red-500/10 p-2 rounded animate-in fade-in slide-in-from-top-1">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="text-center">
+            {writeError.message.includes('insufficient funds') 
+              ? 'Insufficient ETH for gas + price'
+              : writeError.message.includes('User rejected')
+                ? 'Transaction rejected in wallet'
+                : 'Transaction failed. Check console for details.'}
+          </span>
+        </div>
       )}
     </div>
   );
