@@ -4,7 +4,7 @@
 import './styles/globals.css';
 import { useState, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, useConnect, useAccount } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from './lib/wagmi-config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
