@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Loader2, Sparkles, CheckCircle2, Shield } from 'lucide-react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 
 interface Props {
@@ -10,15 +10,23 @@ interface Props {
   priceEth: string;
   badgeName: string;
   badgeColor: 'purple' | 'cyan';
+  // New props to force visibility from parent
+  isConnected: boolean;
+  userAddress: string | null;
 }
 
 // Fixed contract addresses for Base Network
 const MANIFOLD_CLAIM_CONTRACT = '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE';
 const CREATOR_CONTRACT = '0x6d70517b4bb4921b6fe0b131d62415332db1b831';
 
-export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor }: Props) {
-  const { isConnected } = useAccount();
-  const { address } = useAccount();
+export function ManifoldMintButton({ 
+  instanceId, 
+  priceEth, 
+  badgeName, 
+  badgeColor,
+  isConnected,   // Receive from parent
+  userAddress    // Receive from parent
+}: Props) {
   
   // Wagmi hooks for writing to contract
   const { data: hash, writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
@@ -33,14 +41,13 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
   useEffect(() => {
     if (isConfirmed) {
       setIsSuccess(true);
-      // Reset success state after 5 seconds to allow another mint
       const timer = setTimeout(() => setIsSuccess(false), 5000);
       return () => clearTimeout(timer);
     }
   }, [isConfirmed]);
 
   const mint = () => {
-    if (!address) return;
+    if (!userAddress) return;
 
     writeContract({
       address: MANIFOLD_CLAIM_CONTRACT, 
@@ -63,7 +70,7 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
         instanceId,
         0,  // mintIndex
         [], // merkleProof
-        address
+        userAddress // Use the address passed from parent
       ],
       value: parseEther(priceEth),
     });
@@ -71,7 +78,14 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
 
   const isProcessing = isWritePending || isConfirming;
 
-  if (!isConnected) return null; // Logic handled by parent component usually
+  // IMPORTANT: We trust the parent's isConnected state now
+  if (!isConnected) {
+    return (
+        <Button disabled className="w-full py-4 sm:py-6 rounded-xl bg-[#001F3F]/50 border border-white/10 text-white/50">
+           Connect to Mint
+        </Button>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -111,8 +125,10 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
       </Button>
       
       {writeError && (
-        <p className="text-center text-red-400 text-xs">
-          {writeError.message.includes('User rejected') ? 'Transaction rejected' : 'Mint failed'}
+        <p className="text-center text-red-400 text-xs bg-red-500/10 p-2 rounded">
+          {writeError.message.includes('Connector not found') 
+            ? 'Please try refreshing or reconnecting wallet' 
+            : 'Transaction failed or rejected'}
         </p>
       )}
     </div>

@@ -357,23 +357,27 @@ export function ManifoldNFTClaim({ isConnected, walletAddress, userFid }: Manifo
       )}
 
       {/* NEW MINT BUTTONS SECTION */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto">
-        {/* Founder Button - 0.00617 ETH Total */}
-        <ManifoldMintButton 
-          instanceId={4117309680n}
-          priceEth="0.00617"
-          badgeName="Founder"
-          badgeColor="purple"
-        />
-        
-        {/* Believer Button - 0.00118 ETH Total */}
-        <ManifoldMintButton 
-          instanceId={4117350640n}
-          priceEth="0.00118"
-          badgeName="Believer"
-          badgeColor="cyan"
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto">
+            {/* Founder Button */}
+            <ManifoldMintButton 
+              instanceId={4117309680n}
+              priceEth="0.00617"
+              badgeName="Founder"
+              badgeColor="purple"
+              isConnected={isConnected}     
+              userAddress={walletAddress}   
+            />
+            
+            {/* Believer Button */}
+            <ManifoldMintButton 
+              instanceId={4117350640n}
+              priceEth="0.00118"
+              badgeName="Believer"
+              badgeColor="cyan"
+              isConnected={isConnected}     
+              userAddress={walletAddress}   
+            />
+          </div>
 
       {/* Info Footer - Coinbase/Binance style */}
       <Card className="bg-gradient-to-r from-[#39FF14]/10 via-[#39FF14]/5 to-[#39FF14]/10 border-2 border-[#39FF14]/30 p-5 rounded-xl max-w-5xl mx-auto backdrop-blur-sm">
