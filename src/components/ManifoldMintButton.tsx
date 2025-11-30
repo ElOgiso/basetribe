@@ -1,9 +1,8 @@
 // src/components/ManifoldMintButton.tsx
-import { useState } from 'react';
-import { Button } from './ui/button'; // Ensure this path matches your project
+import { useState, useEffect } from 'react';
+import { Button } from './ui/button';
 import { Loader2, Sparkles, CheckCircle2, Shield } from 'lucide-react';
-import { useAccount, useWriteContract } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
 
 interface Props {
@@ -13,19 +12,38 @@ interface Props {
   badgeColor: 'purple' | 'cyan';
 }
 
+// Fixed contract addresses for Base Network
+const MANIFOLD_CLAIM_CONTRACT = '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE';
+const CREATOR_CONTRACT = '0x6d70517b4bb4921b6fe0b131d62415332db1b831';
+
 export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor }: Props) {
   const { isConnected } = useAccount();
-  const { writeContract, data: hash, isPending } = useWriteContract();
-  const [minted, setMinted] = useState(false);
-
-  // Address of the user (we get it from useAccount but need to handle undefined)
   const { address } = useAccount();
+  
+  // Wagmi hooks for writing to contract
+  const { data: hash, writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  
+  // Wagmi hook to wait for transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isConfirmed) {
+      setIsSuccess(true);
+      // Reset success state after 5 seconds to allow another mint
+      const timer = setTimeout(() => setIsSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isConfirmed]);
 
   const mint = () => {
     if (!address) return;
 
     writeContract({
-      address: '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE', // Manifold Claim Contract
+      address: MANIFOLD_CLAIM_CONTRACT, 
       abi: [{
         name: 'mint',
         type: 'function',
@@ -41,60 +59,62 @@ export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor
       }],
       functionName: 'mint',
       args: [
-        '0x6d70517b4bb4921b6fe0b131d62415332db1b831', // Your Creator Contract
+        CREATOR_CONTRACT,
         instanceId,
-        0,
-        [],
+        0,  // mintIndex
+        [], // merkleProof
         address
       ],
       value: parseEther(priceEth),
-      chainId: base.id,
     });
   };
 
-  // Auto-detect success locally for UI feedback
-  if (hash && !minted && !isPending) {
-    setTimeout(() => setMinted(true), 2000);
-  }
+  const isProcessing = isWritePending || isConfirming;
 
-  if (!isConnected) {
-    return (
-      <Button disabled className="w-full py-6 rounded-xl bg-[#001F3F]/50 border border-white/10 text-white/50">
-        Connect Wallet to Mint
-      </Button>
-    );
-  }
+  if (!isConnected) return null; // Logic handled by parent component usually
 
-  if (minted) {
+  if (isSuccess) {
     return (
-      <Button disabled className="w-full bg-[#39FF14] text-[#001F3F] font-bold py-6 rounded-xl">
-        <CheckCircle2 className="w-5 h-5 mr-2" />
-        Minted Successfully!
+      <Button disabled className="w-full bg-[#39FF14] text-[#001F3F] font-bold py-4 sm:py-6 rounded-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-white/20 animate-pulse" />
+        <CheckCircle2 className="w-5 h-5 mr-2 relative z-10" />
+        <span className="relative z-10">Minted Successfully!</span>
       </Button>
     );
   }
 
   return (
-    <Button
-      onClick={mint}
-      disabled={isPending}
-      className={`w-full font-bold py-6 rounded-xl shadow-lg transition-all ${
-        badgeColor === 'purple'
-          ? 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:opacity-90 text-white'
-          : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:opacity-90 text-white'
-      }`}
-    >
-      {isPending ? (
-        <>
-          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          Confirming...
-        </>
-      ) : (
-        <>
-          {badgeColor === 'purple' ? <Sparkles className="w-5 h-5 mr-2" /> : <Shield className="w-5 h-5 mr-2" />}
-          Mint {badgeName}
-        </>
+    <div className="space-y-2 w-full">
+      <Button
+        onClick={mint}
+        disabled={isProcessing}
+        className={`w-full font-bold py-4 sm:py-6 rounded-xl shadow-lg transition-all relative overflow-hidden group ${
+          badgeColor === 'purple'
+            ? 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:opacity-90 text-white shadow-[#7B2CBF]/20'
+            : 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] hover:opacity-90 text-white shadow-[#00D4FF]/20'
+        }`}
+      >
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+        
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            {isConfirming ? 'Confirming...' : 'Check Wallet...'}
+          </>
+        ) : (
+          <>
+            {badgeColor === 'purple' ? <Sparkles className="w-5 h-5 mr-2" /> : <Shield className="w-5 h-5 mr-2" />}
+            Mint {badgeName}
+          </>
+        )}
+      </Button>
+      
+      {writeError && (
+        <p className="text-center text-red-400 text-xs">
+          {writeError.message.includes('User rejected') ? 'Transaction rejected' : 'Mint failed'}
+        </p>
       )}
-    </Button>
+    </div>
   );
 }
