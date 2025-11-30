@@ -12,13 +12,13 @@ interface Props {
   onSuccess?: () => void;
 }
 
-// Uniswap V3 Router on Base
+// ✅ UNISWAP V3 ROUTER (Correct for Zora Creator Coins on Base)
 const ROUTER_ADDRESS = '0x2626664c2603336E57B271c5C0b26F421741e481';
 const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';
 const BTRIBE_ADDRESS = '0xa58d90ec74c4978a161ffaba582f159b32b2d6d6';
 
 export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuccess }: Props) {
-  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
@@ -27,10 +27,12 @@ export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuc
   const handleSwap = () => {
     if (!walletAddress || !amountEth || amountEth === '0') return;
 
-    // Uniswap V3 ExactInputSingle Params
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
-    const feeTier = 10000; // 1% Fee (Standard for Creator Coins)
+    
+    // ✅ Zora Creator Coins typically use the 1% (10000) Fee Tier
+    const feeTier = 10000; 
 
+    // ExactInputSingleParams struct
     const params = {
       tokenIn: WETH_ADDRESS,
       tokenOut: BTRIBE_ADDRESS,
@@ -38,7 +40,7 @@ export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuc
       recipient: walletAddress as `0x${string}`,
       deadline: BigInt(deadline),
       amountIn: parseEther(amountEth),
-      amountOutMinimum: 0n, // 0 = accept market price (prevents "Output too low" errors)
+      amountOutMinimum: 0n, // 0 = accept market price (avoids reversion)
       sqrtPriceLimitX96: 0n
     };
 
@@ -69,18 +71,15 @@ export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuc
       }],
       functionName: 'exactInputSingle',
       args: [params],
-      value: parseEther(amountEth),
+      value: parseEther(amountEth), // Send ETH with the transaction
       chainId: base.id,
-      gas: 500000n
+      gas: 500000n // ✅ Gas Buffer to prevent "Transaction Generation Error"
     });
   };
 
-  // Check for confirmed transaction
   if (isConfirmed && !swapped) {
     setSwapped(true);
-    if (onSuccess) {
-      setTimeout(() => onSuccess(), 1000);
-    }
+    if (onSuccess) setTimeout(() => onSuccess(), 1000);
   }
 
   if (!isConnected) {
@@ -95,42 +94,39 @@ export function UniswapSwapButton({ amountEth, walletAddress, isConnected, onSuc
     return (
       <Button 
         onClick={() => setSwapped(false)} 
-        className="w-full bg-[#39FF14] hover:bg-[#2ECC11] text-[#001F3F] font-bold py-4 rounded-lg shadow-lg shadow-[#39FF14]/40"
+        className="w-full bg-[#39FF14] hover:bg-[#2ECC11] text-[#001F3F] font-bold py-4 rounded-lg shadow-lg"
       >
-        <CheckCircle2 className="w-4 h-4 mr-2" /> Swap Successful! Do another?
+        <CheckCircle2 className="w-4 h-4 mr-2" /> Swap Successful!
       </Button>
     );
   }
 
   const isLoading = isPending || isConfirming;
-  const loadingText = isPending 
-    ? 'Confirm in Wallet...' 
-    : isConfirming 
-    ? 'Swapping...' 
-    : 'Swap Now';
 
   return (
-    <Button
-      onClick={handleSwap}
-      disabled={isLoading || !amountEth || parseFloat(amountEth) <= 0}
-      className="w-full bg-gradient-to-r from-[#39FF14] to-[#00FF41] hover:from-[#00FF41] hover:to-[#39FF14] text-[#001F3F] font-bold py-4 rounded-lg shadow-lg shadow-[#39FF14]/40 hover:shadow-[#39FF14]/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none relative overflow-hidden group text-sm"
-    >
-      {/* Shimmer effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-      
-      <span className="relative z-10 flex items-center justify-center gap-2">
+    <div className="space-y-2">
+      <Button
+        onClick={handleSwap}
+        disabled={isLoading || !amountEth || parseFloat(amountEth) <= 0}
+        className="w-full bg-gradient-to-r from-[#39FF14] to-[#00FF41] hover:opacity-90 text-[#001F3F] font-bold py-4 rounded-lg transition-all relative overflow-hidden"
+      >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {loadingText}
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            {isPending ? 'Confirm in Wallet...' : 'Swapping...'}
           </>
         ) : (
           <>
-            <ArrowDownUp className="w-4 h-4" />
-            Swap Now
+            <ArrowDownUp className="w-4 h-4 mr-2" />
+            Swap ETH for $BTRIBE
           </>
         )}
-      </span>
-    </Button>
+      </Button>
+      {writeError && (
+        <p className="text-red-400 text-xs text-center">
+          {writeError.message.includes('User rejected') ? 'Transaction rejected' : 'Swap failed. Check console.'}
+        </p>
+      )}
+    </div>
   );
 }

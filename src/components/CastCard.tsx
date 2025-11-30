@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { ExternalLink, Heart, MessageCircle, Repeat2, Quote } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface CastData {
   hash: string;

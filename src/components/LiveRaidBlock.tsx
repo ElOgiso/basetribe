@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import type { UserData } from '@/lib/types';
 import { CONFIG } from '@/lib/constants';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { ethers } from 'ethers';
 
 interface RaidData {

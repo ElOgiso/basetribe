@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Cloud, Droplets, Trophy, Shield, Zap } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { CONFIG } from '@/lib/constants';
 
 interface RainingSeasonOverlayProps {

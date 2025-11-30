@@ -12,7 +12,7 @@ import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
 import { Badge } from './components/ui/badge';
 import { Alert, AlertDescription } from './components/ui/alert';
-import { toast, Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner@2.0.3';
 import { 
   Home, 
   Trophy, 
@@ -48,7 +48,6 @@ import tribeLogo from './assets/logo.png';
 import qrCodeImage from './assets/qrcode.png';
 import donationBackground from './assets/qrbackground.png';
 import tribeBanner from './assets/meetthetribe.png';
-
 
 // Components
 import { TokenScroller } from './components/TokenScroller';

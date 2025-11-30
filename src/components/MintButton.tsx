@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Button } from './ui/button';
 import { Loader2, Sparkles, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3'';
 import { updateMembershipNFT } from '../lib/api';
 import type { NFTPrice } from '../lib/nft';
 
