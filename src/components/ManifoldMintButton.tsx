@@ -1,12 +1,13 @@
 // src/components/ManifoldMintButton.tsx
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Loader2, Sparkles, CheckCircle2, Shield } from 'lucide-react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { Loader2, Sparkles, CheckCircle2, Shield, AlertCircle } from 'lucide-react';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { parseEther } from 'viem';
 import { updateMembershipNFT } from '../lib/api';
 import { fetchFidFromWallet } from '../lib/claiming';
+import { toast } from 'sonner@2.0.3';
 
 interface Props {
   instanceId: bigint;
@@ -14,61 +15,97 @@ interface Props {
   badgeName: string;
   badgeColor: 'purple' | 'cyan';
   userFid?: string | null;
-  walletAddress?: string | null; // Added
-  isConnected?: boolean;         // Added
+  walletAddress: string | null;
+  isConnected: boolean;
 }
 
-export function ManifoldMintButton({ 
-  instanceId, priceEth, badgeName, badgeColor, userFid, 
-  walletAddress, isConnected: isAppConnected 
-}: Props) {
-  const { isConnected: isWagmiConnected, address: wagmiAddress } = useAccount();
-  
-  // Use parent state if available, otherwise fallback to wagmi
-  const isConnected = isAppConnected ?? isWagmiConnected;
-  const address = walletAddress || wagmiAddress;
-  const { writeContract, data: hash, isPending, isSuccess: isWriteSuccess } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+export function ManifoldMintButton({ instanceId, priceEth, badgeName, badgeColor, userFid, walletAddress, isConnected }: Props) {
+  const { writeContract, data: hash, isPending, isSuccess: isWriteSuccess, error: writeError } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: confirmError } = useWaitForTransactionReceipt({
     hash,
   });
   
   const [minted, setMinted] = useState(false);
   const [updatingSheets, setUpdatingSheets] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  const mint = () => {
-    if (!address) return;
+  // Handle write errors
+  useEffect(() => {
+    if (writeError) {
+      console.error('❌ Write contract error:', writeError);
+      toast.error('Transaction failed: ' + (writeError.message || 'Unknown error'));
+      setHasError(true);
+    }
+  }, [writeError]);
 
-    writeContract({
-      address: '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE', // Manifold Claim Contract
-      abi: [{
-        name: 'mint',
-        type: 'function',
-        stateMutability: 'payable',
-        inputs: [
-          { name: 'creatorContractAddress', type: 'address' },
-          { name: 'instanceId', type: 'uint256' },
-          { name: 'mintIndex', type: 'uint32' },
-          { name: 'merkleProof', type: 'bytes32[]' },
-          { name: 'mintFor', type: 'address' }
-        ],
-        outputs: []
-      }],
-      functionName: 'mint',
-      args: [
-        '0x6d70517b4bb4921b6fe0b131d62415332db1b831', // Your Creator Contract
-        instanceId,
-        0,
-        [],
-        address
-      ],
-      value: parseEther(priceEth),
-      chainId: base.id,
+  // Handle confirmation errors
+  useEffect(() => {
+    if (confirmError) {
+      console.error('❌ Transaction confirmation error:', confirmError);
+      toast.error('Confirmation failed: ' + (confirmError.message || 'Unknown error'));
+      setHasError(true);
+    }
+  }, [confirmError]);
+
+  const mint = async () => {
+    if (!walletAddress) {
+      toast.error('No wallet address found');
+      return;
+    }
+
+    console.log('🎨 Starting NFT mint:', {
+      badgeName,
+      instanceId: instanceId.toString(),
+      priceEth,
+      walletAddress,
     });
+
+    setHasError(false);
+
+    try {
+      writeContract({
+        address: '0x26BBEA7803DcAc346D5F5f135b57Cf2c752A02bE', // Manifold Claim Contract
+        abi: [{
+          name: 'mint',
+          type: 'function',
+          stateMutability: 'payable',
+          inputs: [
+            { name: 'creatorContractAddress', type: 'address' },
+            { name: 'instanceId', type: 'uint256' },
+            { name: 'mintIndex', type: 'uint32' },
+            { name: 'merkleProof', type: 'bytes32[]' },
+            { name: 'mintFor', type: 'address' }
+          ],
+          outputs: []
+        }],
+        functionName: 'mint',
+        args: [
+          '0x6d70517b4bb4921b6fe0b131d62415332db1b831', // Your Creator Contract
+          instanceId,
+          0,
+          [],
+          walletAddress as `0x${string}`
+        ],
+        value: parseEther(priceEth),
+        chainId: base.id,
+      });
+      
+      toast.info('Please confirm the transaction in your wallet...');
+    } catch (error) {
+      console.error('❌ Error initiating mint:', error);
+      toast.error('Failed to initiate mint: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setHasError(true);
+    }
   };
 
   // Update Google Sheets when transaction is confirmed
   useEffect(() => {
-    if (isConfirmed && hash && !minted && address) {
+    if (isConfirmed && hash && !minted && walletAddress) {
+      toast.success('🎉 NFT Minted Successfully!', {
+        description: `Your ${badgeName} has been minted!`,
+        duration: 5000,
+      });
+
       const updateSheets = async () => {
         setUpdatingSheets(true);
         try {
@@ -76,7 +113,7 @@ export function ManifoldMintButton({
           let fid = userFid;
           if (!fid) {
             console.log('No FID provided, fetching from wallet...');
-            fid = await fetchFidFromWallet(address);
+            fid = await fetchFidFromWallet(walletAddress);
           }
           
           if (fid) {
@@ -85,13 +122,14 @@ export function ManifoldMintButton({
             
             const updated = await updateMembershipNFT(
               fid,
-              address,
+              walletAddress,
               hash,
               nftType
             );
             
             if (updated) {
               console.log('✅ Membership NFT updated in Google Sheets successfully');
+              toast.success('Membership updated in records!');
             } else {
               console.warn('⚠️ Failed to update Google Sheets (mint still succeeded)');
             }
@@ -108,7 +146,7 @@ export function ManifoldMintButton({
       
       updateSheets();
     }
-  }, [isConfirmed, hash, minted, address, badgeName, userFid]);
+  }, [isConfirmed, hash, minted, walletAddress, badgeName, userFid]);
 
   if (!isConnected) {
     return (
@@ -139,7 +177,7 @@ export function ManifoldMintButton({
   return (
     <Button
       onClick={mint}
-      disabled={isLoading}
+      disabled={isLoading || hasError}
       className={`w-full font-bold py-6 rounded-xl shadow-lg transition-all hover:scale-105 disabled:hover:scale-100 ${
         badgeColor === 'purple'
           ? 'bg-gradient-to-r from-[#7B2CBF] to-[#5A1F9A] hover:from-[#5A1F9A] hover:to-[#7B2CBF] text-white shadow-[0_4px_30px_0_rgba(123,44,191,0.4)] hover:shadow-[0_6px_40px_0_rgba(123,44,191,0.6)]'

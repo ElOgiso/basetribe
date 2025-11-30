@@ -94,6 +94,26 @@ function AppContent() {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
   const [isSessionOpen, setIsSessionOpen] = useState(false);
 
+  // Wagmi hooks for syncing wallet connection
+  const { connect, connectors } = useConnect();
+  const { isConnected: wagmiIsConnected } = useAccount();
+
+  // Sync manual wallet connection with wagmi
+  useEffect(() => {
+    if (address && !wagmiIsConnected && connectors.length > 0) {
+      console.log('🔗 Syncing manual wallet connection with wagmi...');
+      const injectedConnector = connectors[0];
+      if (injectedConnector) {
+        try {
+          connect({ connector: injectedConnector });
+          console.log('✅ Wagmi connector synced');
+        } catch (error) {
+          console.warn('⚠️ Failed to sync wagmi connector:', error);
+        }
+      }
+    }
+  }, [address, wagmiIsConnected, connectors, connect]);
+
   // ✅ SDK READY SIGNAL - Dynamically load Farcaster Frame SDK
   useEffect(() => {
     const load = async () => {
