@@ -8,6 +8,7 @@ import { X, Sparkles, Send, CheckCircle, AlertCircle, Loader2, Gift, Trophy } fr
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner@2.0.3';
+import tribeLogo from './assets/logo.png';
 
 interface ChatMessage {
   id: string;
@@ -97,7 +98,7 @@ export function OnboardingPopup() {
     setMessages(prev => prev.map(msg => ({ ...msg, isLoading: false })));
     
     setTimeout(() => {
-      addBotMessage('What is your username?\n(Do not include @)', false, 'input');
+      addBotMessage('What is your Farcaster username?\n(Do not include @)', false, 'input');
       setCurrentStep('ask_username');
     }, 800);
   };
@@ -326,14 +327,27 @@ export function OnboardingPopup() {
 
   return (
     <>
-      {/* Minimized State - Blue Orb */}
+      {/* Backdrop Overlay - Only when chat is open */}
+      <AnimatePresence>
+        {!isMinimized && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMinimized(true)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Minimized State - BaseTribe Logo Orb */}
       <AnimatePresence>
         {isMinimized && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-40 right-6 z-40"
+            className="fixed bottom-24 right-4 z-[9997]"
           >
             <button
               onClick={handleOrbClick}
@@ -341,17 +355,21 @@ export function OnboardingPopup() {
               aria-label="BaseTribe Onboarding"
             >
               {/* Pulsing glow effect */}
-              <div className="absolute inset-0 bg-[#4169E1] rounded-full blur-xl opacity-50 animate-pulse" />
+              <div className="absolute inset-0 bg-[#39FF14] rounded-full blur-xl opacity-40 animate-pulse" />
               
-              {/* Main orb */}
-              <div className="relative w-14 h-14 bg-gradient-to-br from-[#4169E1] to-[#5B3FD6] rounded-full border-2 border-[#00D4FF] shadow-lg shadow-[#4169E1]/50 flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
-                <Sparkles className="w-6 h-6 text-white animate-pulse" />
+              {/* Main orb with BaseTribe logo */}
+              <div className="relative w-16 h-16 bg-gradient-to-br from-[#001F3F] to-[#002855] rounded-full border-2 border-[#39FF14] shadow-lg shadow-[#39FF14]/50 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 overflow-hidden">
+                <img 
+                  src={baseTribeLogo} 
+                  alt="BaseTribe" 
+                  className="w-14 h-14 rounded-full object-cover"
+                />
               </div>
 
               {/* Tooltip */}
               <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div className="bg-[#4169E1] text-white text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                  Get Started
+                <div className="bg-[#39FF14] text-[#001F3F] text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                  Join BaseTribe
                 </div>
               </div>
             </button>
@@ -363,38 +381,36 @@ export function OnboardingPopup() {
       <AnimatePresence>
         {!isMinimized && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="fixed bottom-6 right-6 z-50 w-full max-w-md"
-            style={{ maxHeight: 'calc(100vh - 100px)' }}
+            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90vw] max-w-[360px]"
           >
-            <Card className="relative overflow-hidden bg-white border-2 border-[#E5E7EB] shadow-2xl flex flex-col" style={{ height: '600px', maxHeight: '80vh' }}>
-              {/* Header */}
-              <div className="bg-gradient-to-r from-[#4169E1] to-[#5B3FD6] px-5 py-4 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-white blur-md opacity-50 animate-pulse" />
-                    <div className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-[#4169E1]" />
-                    </div>
-                  </div>
+            <Card className="relative overflow-hidden bg-white border-2 border-[#39FF14] shadow-2xl shadow-[#39FF14]/20 flex flex-col" style={{ height: '500px', maxHeight: '85vh' }}>
+              {/* Header - Compact */}
+              <div className="bg-gradient-to-r from-[#001F3F] to-[#002855] px-4 py-3 flex items-center justify-between flex-shrink-0 border-b-2 border-[#39FF14]">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={baseTribeLogo} 
+                    alt="BaseTribe" 
+                    className="w-8 h-8 rounded-full object-cover ring-2 ring-[#39FF14]/50"
+                  />
                   <div>
-                    <h3 className="text-white font-bold">BaseTribe Onboarding</h3>
-                    <p className="text-white/80 text-xs">Get verified & join the tribe</p>
+                    <h3 className="text-white font-bold text-sm">BaseTribe</h3>
+                    <p className="text-[#39FF14] text-xs">Onboarding</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsMinimized(true)}
-                  className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                  aria-label="Minimize"
+                  className="p-2 rounded-full bg-[#39FF14] hover:bg-[#2ECC11] transition-colors group"
+                  aria-label="Close"
                 >
-                  <X className="w-4 h-4 text-white" />
+                  <X className="w-4 h-4 text-[#001F3F] group-hover:rotate-90 transition-transform" />
                 </button>
               </div>
 
-              {/* Chat Messages Container */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+              {/* Chat Messages Container - Compact */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gradient-to-b from-gray-50 to-white">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -406,18 +422,20 @@ export function OnboardingPopup() {
                     {/* Bot Message */}
                     {message.type === 'bot' && (
                       <div className="flex items-start gap-2 max-w-[85%]">
-                        <div className="w-8 h-8 bg-gradient-to-br from-[#4169E1] to-[#5B3FD6] rounded-full flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
+                        <img 
+                          src={baseTribeLogo} 
+                          alt="Bot" 
+                          className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-[#001F3F]/20"
+                        />
                         <div>
-                          <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
+                          <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
                             {message.isLoading ? (
                               <div className="flex items-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin text-[#4169E1]" />
-                                <span className="text-gray-600 text-sm">Processing...</span>
+                                <Loader2 className="w-4 h-4 animate-spin text-[#001F3F]" />
+                                <span className="text-gray-600 text-xs">Processing...</span>
                               </div>
                             ) : (
-                              <p className="text-gray-800 text-sm whitespace-pre-line leading-relaxed">{message.content}</p>
+                              <p className="text-gray-800 text-xs whitespace-pre-line leading-relaxed">{message.content}</p>
                             )}
                           </div>
                           
@@ -426,7 +444,7 @@ export function OnboardingPopup() {
                             <div className="mt-2 flex gap-2">
                               <Button
                                 onClick={handleStart}
-                                className="bg-gradient-to-r from-[#4169E1] to-[#5B3FD6] text-white hover:opacity-90"
+                                className="bg-gradient-to-r from-[#001F3F] to-[#002855] text-white hover:opacity-90"
                                 size="sm"
                               >
                                 Start Onboarding
@@ -443,38 +461,39 @@ export function OnboardingPopup() {
                             </div>
                           )}
 
-                          {/* Reward Card */}
+                          {/* Reward Card - Compact */}
                           {message.component === 'reward' && (
                             <motion.div
                               initial={{ scale: 0.9, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              className="mt-3 bg-gradient-to-br from-[#F0C75E] via-[#FFD700] to-[#F0C75E] rounded-2xl p-5 border-2 border-[#FFD700] shadow-lg shadow-[#F0C75E]/50"
+                              className="mt-2 bg-gradient-to-br from-[#F0C75E] via-[#FFD700] to-[#F0C75E] rounded-xl p-3 border-2 border-[#FFD700] shadow-lg shadow-[#F0C75E]/50"
                             >
-                              <div className="text-center space-y-3">
-                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto">
-                                  <Gift className="w-8 h-8 text-[#F0C75E]" />
+                              <div className="text-center space-y-2">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto">
+                                  <Gift className="w-6 h-6 text-[#F0C75E]" />
                                 </div>
                                 <div>
-                                  <p className="text-[#0A0F2B] font-bold text-2xl">
+                                  <p className="text-[#0A0F2B] font-bold text-lg">
                                     +{message.metadata.amount} ${message.metadata.token}
                                   </p>
-                                  <p className="text-[#0A0F2B]/70 text-sm mt-1">
+                                  <p className="text-[#0A0F2B]/70 text-xs mt-1">
                                     Early member bonus!
                                   </p>
                                 </div>
                                 <Button
                                   onClick={handleClaimReward}
                                   disabled={claimed || isProcessing}
-                                  className="w-full bg-[#0A0F2B] hover:bg-[#0A0F2B]/90 text-white font-bold"
+                                  className="w-full bg-[#0A0F2B] hover:bg-[#0A0F2B]/90 text-white font-bold text-xs"
+                                  size="sm"
                                 >
                                   {claimed ? (
                                     <>
-                                      <CheckCircle className="w-4 h-4 mr-2" />
+                                      <CheckCircle className="w-3 h-3 mr-2" />
                                       Claimed!
                                     </>
                                   ) : isProcessing ? (
                                     <>
-                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
                                       Claiming...
                                     </>
                                   ) : (
@@ -490,8 +509,8 @@ export function OnboardingPopup() {
 
                     {/* User Message */}
                     {message.type === 'user' && (
-                      <div className="bg-gradient-to-r from-[#4169E1] to-[#5B3FD6] rounded-2xl rounded-tr-none px-4 py-3 shadow-sm max-w-[85%]">
-                        <p className="text-white text-sm">{message.content}</p>
+                      <div className="bg-gradient-to-r from-[#001F3F] to-[#002855] rounded-2xl rounded-tr-none px-3 py-2 shadow-sm max-w-[85%]">
+                        <p className="text-white text-xs">{message.content}</p>
                       </div>
                     )}
                   </motion.div>
@@ -507,7 +526,8 @@ export function OnboardingPopup() {
                   >
                     <Button
                       onClick={handleStart}
-                      className="bg-gradient-to-r from-[#4169E1] to-[#5B3FD6] text-white hover:opacity-90"
+                      className="bg-gradient-to-r from-[#001F3F] to-[#002855] text-white hover:opacity-90"
+                      size="sm"
                     >
                       Start Onboarding
                     </Button>
@@ -517,9 +537,9 @@ export function OnboardingPopup() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Input Bar */}
+              {/* Input Bar - Compact */}
               {(currentStep === 'ask_username' || currentStep === 'ask_base_username') && (
-                <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+                <div className="border-t border-gray-200 p-3 bg-white flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -528,17 +548,17 @@ export function OnboardingPopup() {
                       onKeyPress={handleInputKeyPress}
                       placeholder={currentStep === 'ask_username' ? 'yourname' : 'base.eth'}
                       disabled={isProcessing}
-                      className="flex-1 px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#4169E1] transition-all disabled:opacity-50"
+                      className="flex-1 px-3 py-2 bg-gray-100 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all disabled:opacity-50"
                     />
                     <button
                       onClick={currentStep === 'ask_username' ? handleUsernameSubmit : handleBaseUsernameSubmit}
                       disabled={isProcessing || !inputValue.trim()}
-                      className="w-10 h-10 bg-gradient-to-r from-[#4169E1] to-[#5B3FD6] rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-9 h-9 bg-gradient-to-r from-[#001F3F] to-[#002855] rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isProcessing ? (
-                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        <Loader2 className="w-4 h-4 text-white animate-spin" />
                       ) : (
-                        <Send className="w-5 h-5 text-white" />
+                        <Send className="w-4 h-4 text-white" />
                       )}
                     </button>
                   </div>
