@@ -8,7 +8,7 @@ import { X, Sparkles, Send, CheckCircle, AlertCircle, Loader2, Gift, Trophy } fr
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner@2.0.3';
-import tribeLogo from './assets/logo.png';
+import baseTribeLogo from '../assets/logo.png';
 
 interface ChatMessage {
   id: string;
