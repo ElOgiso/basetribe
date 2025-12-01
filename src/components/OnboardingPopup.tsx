@@ -109,9 +109,9 @@ export function OnboardingPopup() {
       return;
     }
 
-    const username = inputValue.trim().replace('@', '');
+    const username = inputValue.trim().replace('@', '').toLowerCase(); // Convert to lowercase for case-insensitive matching
     setFarcasterUsername(username);
-    addUserMessage(username);
+    addUserMessage(inputValue.trim().replace('@', '')); // Show original input to user
     setInputValue('');
     setIsProcessing(true);
 
@@ -128,6 +128,13 @@ export function OnboardingPopup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('⚠️ Profile endpoint returned non-JSON response (text/html) - API route may not be deployed');
+        throw new Error('API not available. Please try again later.');
+      }
 
       const data = await response.json();
 
@@ -347,7 +354,7 @@ export function OnboardingPopup() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-24 right-4 z-[9997]"
+            className="fixed bottom-44 right-4 z-[9997]"
           >
             <button
               onClick={handleOrbClick}
@@ -384,19 +391,19 @@ export function OnboardingPopup() {
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 20 }}
-            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90vw] max-w-[360px]"
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] w-[95vw] sm:w-[85vw] max-w-[430px]"
           >
-            <Card className="relative overflow-hidden bg-white border-2 border-[#39FF14] shadow-2xl shadow-[#39FF14]/20 flex flex-col" style={{ height: '500px', maxHeight: '85vh' }}>
+            <Card className="relative overflow-hidden bg-white border-2 border-[#39FF14] shadow-2xl shadow-[#39FF14]/20 flex flex-col h-[75vh] sm:h-[600px] max-h-[700px]">
               {/* Header - Compact */}
               <div className="bg-gradient-to-r from-[#001F3F] to-[#002855] px-4 py-3 flex items-center justify-between flex-shrink-0 border-b-2 border-[#39FF14]">
                 <div className="flex items-center gap-2">
                   <img 
                     src={baseTribeLogo} 
                     alt="BaseTribe" 
-                    className="w-8 h-8 rounded-full object-cover ring-2 ring-[#39FF14]/50"
+                    className="w-9 h-9 rounded-full object-cover ring-2 ring-[#39FF14]/50"
                   />
                   <div>
-                    <h3 className="text-white font-bold text-sm">BaseTribe</h3>
+                    <h3 className="text-white font-bold text-base">BaseTribe</h3>
                     <p className="text-[#39FF14] text-xs">Onboarding</p>
                   </div>
                 </div>
@@ -405,12 +412,12 @@ export function OnboardingPopup() {
                   className="p-2 rounded-full bg-[#39FF14] hover:bg-[#2ECC11] transition-colors group"
                   aria-label="Close"
                 >
-                  <X className="w-4 h-4 text-[#001F3F] group-hover:rotate-90 transition-transform" />
+                  <X className="w-5 h-5 text-[#001F3F] group-hover:rotate-90 transition-transform" />
                 </button>
               </div>
 
-              {/* Chat Messages Container - Compact */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gradient-to-b from-gray-50 to-white">
+              {/* Chat Messages Container */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-gray-50 to-white">
                 {messages.map((message, index) => (
                   <motion.div
                     key={message.id}
@@ -425,17 +432,17 @@ export function OnboardingPopup() {
                         <img 
                           src={baseTribeLogo} 
                           alt="Bot" 
-                          className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-[#001F3F]/20"
+                          className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-1 ring-[#001F3F]/20"
                         />
                         <div>
-                          <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-3 py-2 shadow-sm">
+                          <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-3 py-2.5 shadow-sm">
                             {message.isLoading ? (
                               <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-[#001F3F]" />
-                                <span className="text-gray-600 text-xs">Processing...</span>
+                                <span className="text-gray-600 text-sm">Processing...</span>
                               </div>
                             ) : (
-                              <p className="text-gray-800 text-xs whitespace-pre-line leading-relaxed">{message.content}</p>
+                              <p className="text-gray-800 text-sm whitespace-pre-line leading-relaxed">{message.content}</p>
                             )}
                           </div>
                           
@@ -461,39 +468,39 @@ export function OnboardingPopup() {
                             </div>
                           )}
 
-                          {/* Reward Card - Compact */}
+                          {/* Reward Card */}
                           {message.component === 'reward' && (
                             <motion.div
                               initial={{ scale: 0.9, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              className="mt-2 bg-gradient-to-br from-[#F0C75E] via-[#FFD700] to-[#F0C75E] rounded-xl p-3 border-2 border-[#FFD700] shadow-lg shadow-[#F0C75E]/50"
+                              className="mt-2 bg-gradient-to-br from-[#F0C75E] via-[#FFD700] to-[#F0C75E] rounded-xl p-4 border-2 border-[#FFD700] shadow-lg shadow-[#F0C75E]/50"
                             >
                               <div className="text-center space-y-2">
-                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto">
-                                  <Gift className="w-6 h-6 text-[#F0C75E]" />
+                                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto">
+                                  <Gift className="w-7 h-7 text-[#F0C75E]" />
                                 </div>
                                 <div>
-                                  <p className="text-[#0A0F2B] font-bold text-lg">
+                                  <p className="text-[#0A0F2B] font-bold text-xl">
                                     +{message.metadata.amount} ${message.metadata.token}
                                   </p>
-                                  <p className="text-[#0A0F2B]/70 text-xs mt-1">
+                                  <p className="text-[#0A0F2B]/70 text-sm mt-1">
                                     Early member bonus!
                                   </p>
                                 </div>
                                 <Button
                                   onClick={handleClaimReward}
                                   disabled={claimed || isProcessing}
-                                  className="w-full bg-[#0A0F2B] hover:bg-[#0A0F2B]/90 text-white font-bold text-xs"
+                                  className="w-full bg-[#0A0F2B] hover:bg-[#0A0F2B]/90 text-white font-bold"
                                   size="sm"
                                 >
                                   {claimed ? (
                                     <>
-                                      <CheckCircle className="w-3 h-3 mr-2" />
+                                      <CheckCircle className="w-4 h-4 mr-2" />
                                       Claimed!
                                     </>
                                   ) : isProcessing ? (
                                     <>
-                                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                       Claiming...
                                     </>
                                   ) : (
@@ -509,8 +516,8 @@ export function OnboardingPopup() {
 
                     {/* User Message */}
                     {message.type === 'user' && (
-                      <div className="bg-gradient-to-r from-[#001F3F] to-[#002855] rounded-2xl rounded-tr-none px-3 py-2 shadow-sm max-w-[85%]">
-                        <p className="text-white text-xs">{message.content}</p>
+                      <div className="bg-gradient-to-r from-[#001F3F] to-[#002855] rounded-2xl rounded-tr-none px-4 py-2.5 shadow-sm max-w-[85%]">
+                        <p className="text-white text-sm">{message.content}</p>
                       </div>
                     )}
                   </motion.div>
@@ -537,9 +544,9 @@ export function OnboardingPopup() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Input Bar - Compact */}
+              {/* Input Bar - Blue with white text */}
               {(currentStep === 'ask_username' || currentStep === 'ask_base_username') && (
-                <div className="border-t border-gray-200 p-3 bg-white flex-shrink-0">
+                <div className="border-t-2 border-[#39FF14] p-4 bg-gradient-to-r from-[#001F3F] to-[#002855] flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -548,17 +555,17 @@ export function OnboardingPopup() {
                       onKeyPress={handleInputKeyPress}
                       placeholder={currentStep === 'ask_username' ? 'yourname' : 'base.eth'}
                       disabled={isProcessing}
-                      className="flex-1 px-3 py-2 bg-gray-100 rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all disabled:opacity-50"
+                      className="flex-1 px-4 py-3 bg-[#002855] text-white placeholder-white/50 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#39FF14] transition-all disabled:opacity-50 border border-[#39FF14]/30"
                     />
                     <button
                       onClick={currentStep === 'ask_username' ? handleUsernameSubmit : handleBaseUsernameSubmit}
                       disabled={isProcessing || !inputValue.trim()}
-                      className="w-9 h-9 bg-gradient-to-r from-[#001F3F] to-[#002855] rounded-full flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-11 h-11 bg-[#39FF14] hover:bg-[#2ECC11] rounded-full flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#39FF14]/30"
                     >
                       {isProcessing ? (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        <Loader2 className="w-5 h-5 text-[#001F3F] animate-spin" />
                       ) : (
-                        <Send className="w-4 h-4 text-white" />
+                        <Send className="w-5 h-5 text-[#001F3F]" />
                       )}
                     </button>
                   </div>
