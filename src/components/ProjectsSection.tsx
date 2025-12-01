@@ -10,7 +10,7 @@ export function ProjectsSection() {
     {
       name: 'Base Tribe Community',
       status: 'live',
-      description: 'A comprehensive community engagement platform for the Base Tribe Farcaster community. Features include real-time engagement tracking, token rewards ($BTRIBE), leaderboard systems, NFT minting, and seamless Web3 integration with Base Account and Farcaster protocols.',
+      description: 'A comprehensive community engagement platform for the base ecosystem. Features include real-time engagement tracking, token rewards ($BTRIBE), leaderboard systems, NFT minting, and seamless Web3 integration with Base Account and Farcaster protocols.',
       link: null,
       version: 'Beta',
       icon: '🏆',

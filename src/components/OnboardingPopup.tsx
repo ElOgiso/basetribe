@@ -98,7 +98,7 @@ export function OnboardingPopup() {
     setMessages(prev => prev.map(msg => ({ ...msg, isLoading: false })));
     
     setTimeout(() => {
-      addBotMessage('What is your Farcaster username?\n(Do not include @)', false, 'input');
+      addBotMessage('What is your username?\n(Do not include @)', false, 'input');
       setCurrentStep('ask_username');
     }, 800);
   };
