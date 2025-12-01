@@ -191,7 +191,7 @@ export function HowItWorks() {
                       <Ban className="w-5 h-5 text-red-400" />
                       Hard Ban (10 Defaults)
                     </div>
-                    <div className="text-2xl text-red-400">Permanent</div>
+                    <div className="text-2xl text-red-400">House-Arrest</div>
                   </div>
                 </div>
               </div>
@@ -204,7 +204,7 @@ export function HowItWorks() {
                   Self-Vetting
                 </div>
                 <p className="text-sm text-white/80">
-                  Click 'Vet Myself Now' after sessions for instant score check (costs <span className="text-[#39FF14] font-bold">200 $BTRIBE</span>)
+                  Click 'Vet Myself Now' if engeaing on TG after sessions for instant score check (costs <span className="text-[#39FF14] font-bold">200 $BTRIBE</span>)
                 </p>
               </div>
             </Card>
@@ -252,7 +252,7 @@ export function HowItWorks() {
                     <span className="font-bold text-green-400">ALLOWED</span>
                   </div>
                   <p className="text-white/80 text-sm">
-                    <strong>Only Farcaster Links:</strong> Must be from farcaster.xyz so you can post anywhere but copy paste your link in Farcaster URL
+                    <strong>Share your post Links:</strong> Post when session is open in the feed or on telegram.
                   </p>
                 </div>
 

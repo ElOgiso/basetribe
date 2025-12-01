@@ -1,4 +1,4 @@
-// PostModal.tsx - Modal for posting Farcaster links during active sessions
+// PostModal.tsx - Modal for posting links during active sessions
 // Only shows for full members when session is open
 
 'use client';

@@ -13,7 +13,7 @@ const ONBOARDING_STEPS = [
   "Meet the community that helps you get discovered.",
   "Connect, comment, and rise together.",
   "More visibility. More rewards. More fun.",
-  "Your tribe is waiting. Tap to join.",
+  "Your tribe is waiting. Tap join on the top menu to join.",
 ];
 
 const STEP_DELAY = 7000; // 7 seconds between steps

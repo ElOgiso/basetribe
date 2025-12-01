@@ -18,7 +18,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
     {
       name: 'Base Tribe Community',
       status: 'live',
-      description: 'A comprehensive community engagement platform for the Base Tribe Farcaster community. Features include real-time engagement tracking, token rewards ($BTRIBE), leaderboard systems, NFT minting, and seamless Web3 integration with Base Account and Farcaster protocols.',
+      description: 'A comprehensive community engagement platform for the Base ecosystem. Features include real-time engagement tracking, token rewards ($BTRIBE),($JESSE),($USDC), leaderboard systems, NFT minting, and seamless Web3 integration with Base Account and Farcaster protocols.',
       link: null,
       version: 'Beta',
       icon: '🏆',
@@ -26,7 +26,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
     {
       name: 'FOMO CLIX',
       status: 'private-beta',
-      description: 'An AI-powered automated content coin and creator coin trader. Democratizing coin trading on Base blockchain with intelligent automation that makes trading accessible to everyone.',
+      description: 'An AI-powered automated content coin and creator coin trader. Democratizing coin trading on Base blockchain with intelligent automation that makes trading accessible to everyone on base.',
       link: 'https://x.com/FomoClix',
       version: 'Private Beta',
       icon: '🤖',
@@ -34,7 +34,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
     {
       name: 'BaseBoost',
       status: 'private-beta',
-      description: 'Your AI that boosts your posts on Base. Schedule buying of your own post coin, allocating a user\'s budget into their own creator coin. It\'s an automated profile investment agent. Paid service. Beta testing — community gets early access.',
+      description: 'Your AI that boosts your posts on Base. Schedule buying of your own post coin, allocating a user\'s budget into their own creator coin. It\'s an automated profile investment agent. Paid service. Beta testing - community gets early access.',
       link: null,
       version: 'Private Beta',
       icon: '🚀',

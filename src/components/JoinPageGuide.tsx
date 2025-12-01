@@ -37,7 +37,7 @@ export function JoinPageGuide() {
           Your Guide to Base Tribe
         </h2>
         <p className="text-white/60 text-xs md:text-sm lg:text-base max-w-2xl mx-auto px-4">
-          Everything you need to know about earning, engaging, and thriving in our community
+          Everything you need to know about earning, engaging, and thriving in our community in miniapp and telegram.
         </p>
       </div>
 

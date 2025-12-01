@@ -34,7 +34,7 @@ export function JoinFlow({ open, onOpenChange }: JoinFlowProps) {
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="w-5 h-5 text-[#39FF14] mt-0.5 flex-shrink-0" />
-              <p className="text-white">Valid Farcaster ID (FID)</p>
+              <p className="text-white">Valid (FID)</p>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="w-5 h-5 text-[#39FF14] mt-0.5 flex-shrink-0" />
@@ -285,7 +285,7 @@ export function JoinFlow({ open, onOpenChange }: JoinFlowProps) {
             </Card>
             <Card className="bg-[#001F3F]/50 p-3 border border-white/10">
               <h4 className="text-[#39FF14] font-medium mb-1">ENGAGEMENT</h4>
-              <p className="text-white/70 text-sm">6 daily sessions for posting Farcaster casts</p>
+              <p className="text-white/70 text-sm">6 circle sessions for posting casts, runs both day and night</p>
             </Card>
             <Card className="bg-[#001F3F]/50 p-3 border border-white/10">
               <h4 className="text-[#39FF14] font-medium mb-1">GENERAL</h4>
