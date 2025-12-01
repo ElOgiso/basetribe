@@ -121,20 +121,17 @@ export function OnboardingPopup() {
       setCurrentStep('verifying');
     }, 500);
 
-    // Call backend API
+    // Call Google Apps Script backend directly
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwVbB1NLt4M7krkf_2vkjfflcv3-fknAtF6oJpf6iA7TUNYn_Q624OW-gXXqhQHiifsdA/exec';
+
     try {
-      const response = await fetch('/api/onboarding/verify-farcaster', {
+      const response = await fetch(`${BACKEND_URL}?action=verifyFarcaster`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username }),
       });
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('⚠️ Profile endpoint returned non-JSON response (text/html) - API route may not be deployed');
-        throw new Error('API not available. Please try again later.');
-      }
 
       const data = await response.json();
 
@@ -196,9 +193,11 @@ export function OnboardingPopup() {
       setCurrentStep('completing');
     }, 500);
 
-    // Call backend API to complete onboarding
+    // Call Google Apps Script backend directly
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwVbB1NLt4M7krkf_2vkjfflcv3-fknAtF6oJpf6iA7TUNYn_Q624OW-gXXqhQHiifsdA/exec';
+
     try {
-      const response = await fetch('/api/onboarding/complete', {
+      const response = await fetch(`${BACKEND_URL}?action=completeOnboarding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -256,8 +255,11 @@ export function OnboardingPopup() {
     
     setIsProcessing(true);
     
+    // Call Google Apps Script backend directly
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwVbB1NLt4M7krkf_2vkjfflcv3-fknAtF6oJpf6iA7TUNYn_Q624OW-gXXqhQHiifsdA/exec';
+    
     try {
-      const response = await fetch('/api/onboarding/claim-reward', {
+      const response = await fetch(`${BACKEND_URL}?action=claimReward`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -291,10 +293,16 @@ export function OnboardingPopup() {
     localStorage.setItem('basetribe_onboarding_completed', 'true');
     setHasSeenOnboarding(true);
     
+    // Add final message about membership badge
+    addBotMessage('✅ You are now a Full Member!\n\n🎖️ Check the "Membership Badge" section to mint your exclusive NFT!');
+    
     setTimeout(() => {
       setIsMinimized(true);
-      toast.success('Welcome to BaseTribe! 🎉');
-    }, 500);
+      toast.success('Welcome to BaseTribe! 🎉', {
+        description: 'Check Membership Badge section to mint your NFT!',
+        duration: 6000,
+      });
+    }, 3000);
   };
 
   const handleRetry = () => {
