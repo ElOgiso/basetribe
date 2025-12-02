@@ -805,3 +805,33 @@ export async function fetchActivityFeed(limit: number = 50): Promise<ActivityFee
     return [];
   }
 }
+// Register a new web user directly to Google Sheets
+export async function registerWebUser(
+  fid: string,
+  username: string,
+  followers: number,
+  status: string
+): Promise<boolean> {
+  try {
+    console.log('📝 Registering new web user:', { fid, username, status });
+    
+    // We reuse the existing /api/sheets route which proxies to Google Script
+    const response = await fetch('/api/sheets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register_web',
+        fid,
+        username,
+        followers,
+        status
+      }),
+    });
+
+    if (!response.ok) return false;
+    return true;
+  } catch (error) {
+    console.error('❌ Error registering user:', error);
+    return false;
+  }
+}

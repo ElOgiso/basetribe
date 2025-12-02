@@ -86,7 +86,65 @@ export function UserDataLoader({ onUserDataLoaded, onMembershipStatus }: UserDat
       const userData = await fetchUserDataByFID(fid);
 
       if (!userData) {
-        console.warn('⚠️ User not found in Google Sheets (not a Base Tribe member)');
+        console.log('⚠️ User not in Sheets. Attempting auto-registration...');
+        
+        // A. Fetch Profile Data immediately to get the PFP
+        const profile = await fetchFarcasterProfile(fid);
+        
+        if (profile) {
+            console.log('✅ Found Profile for new user:', profile.username);
+            
+            // B. Calculate Status (Default to rookie if we can't verify followers yet)
+            const followers = 0; 
+            const status = 'rookie'; // Default status for web visitors
+
+            // C. Register User in Google Sheets (Dynamic Import to avoid circular dependencies)
+            await import('@/lib/api').then(mod => 
+                mod.registerWebUser(fid, profile.username, followers, status)
+            );
+
+            // D. Create a Temporary User Object to log them in immediately
+            // We set profile_image here so the UI updates instantly
+            const newUser: UserData = {
+                telegram_id: `WEB_${fid}`,
+                telegram_username: '',
+                farcaster_username: profile.username,
+                farcaster_fid: fid,
+                base_username: '',
+                stars: 2,
+                defaults: 0,
+                btribe_balance: 0,
+                jesse_balance: 0,
+                status: status,
+                session_streak: 0,
+                followers: followers,
+                profile_image: profile.pfpUrl, // ✅ IMAGE SET HERE
+                wallet_address: address,
+                last_engaged_date: '',
+                fail_count: 0,
+                ban_status: 'none',
+                email: '',
+                probation_count: 0,
+                invite_link: '',
+                invites_count: 0,
+                usdc_claims: 0,
+                premium: false,
+                shoutouts_left: 0,
+                membership_nft: '',
+                completed_tasks: '',
+                booster: 0,
+            };
+
+            // E. Notify App that user is loaded
+            console.log('✅ New user auto-registered and logged in!');
+            onUserDataLoaded(newUser, profile);
+            onMembershipStatus(status === 'full_member');
+            setLoading(false);
+            return;
+        }
+
+        // Fallback: If we can't even find their Farcaster profile
+        console.warn('⚠️ User not found and profile fetch failed');
         setError('You are not a member of Base Tribe yet');
         onUserDataLoaded(null, null);
         onMembershipStatus(false);
